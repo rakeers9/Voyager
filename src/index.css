@@ -1,56 +1,64 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0A0C10;
-  --color-surface: #161B22;
-  --color-muted: #8B949E;
-  --color-primary: #C9D1D9;
-  --color-border: #30363D;
-  --color-critical: #F85149;
-  --color-warning: #D29922;
-  --color-success: #3FB950;
-  --color-info: #58A6FF;
+  --color-base: #09090B;
+  --color-surface: #0E0E11;
+  --color-surface-hover: #161618;
+  --color-elevated: #1A1A1E;
+  --color-edge: #2A2A30;
+  --color-edge-active: #A1A1AA;
+  --color-primary: #D4D4D8;
+  --color-muted: #A1A1AA;
+  --color-heading: #FAFAFA;
+  --color-dim: #71717A;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --color-danger: #EF4444;
+  --color-warning: #FBBF24;
+  --color-success: #34D399;
+  --color-info: #A1A1AA;
+  --color-accent: #A78BFA;
 
-  --radius-sm: 2px;
-  --radius-md: 4px;
+  --color-drive: #60A5FA;
+  --color-walk: #34D399;
+  --color-meal: #FBBF24;
+  --color-accommodation: #A78BFA;
+  --color-activity: #FB923C;
+  --color-sightseeing: #60A5FA;
+  --color-errand: #A1A1AA;
+  --color-rest: #71717A;
+
+  --font-ui: var(--font-ui-face, 'Inter', sans-serif);
+  --font-mono: var(--font-mono-face, 'JetBrains Mono', monospace);
 }
 
-:root {
-  --background: #0A0C10;
-  --surface: #161B22;
-  --primary: #C9D1D9;
-  --muted: #8B949E;
-  --border: #30363D;
-  --critical: #F85149;
-  --warning: #D29922;
-  --success: #3FB950;
-  --info: #58A6FF;
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2A2A30 #09090B;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--primary);
-  font-family: var(--font-sans);
   margin: 0;
-  padding: 0;
+  background-color: #09090B;
+  color: #D4D4D8;
+  font-family: var(--font-ui);
+  overflow: hidden;
 }
 
-::-webkit-scrollbar {
-  width: 4px;
+/* Mapbox overrides for dark theme */
+.mapboxgl-popup-content {
+  background: #0E0E11 !important;
+  color: #D4D4D8 !important;
+  border: 1px solid #2A2A30 !important;
+  border-radius: 4px !important;
+  padding: 8px 12px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--background);
+.mapboxgl-popup-tip {
+  border-top-color: #0E0E11 !important;
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
+.mapboxgl-ctrl-attrib {
+  display: none !important;
 }
