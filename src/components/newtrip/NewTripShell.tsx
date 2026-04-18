@@ -103,7 +103,7 @@ export default function NewTripShell() {
                         <p className="text-[13px] truncate">{displayTitle}</p>
                         <p className="text-[10px] font-mono text-dim">
                           {saved.trip.status === 'draft'
-                            ? (isActive ? 'Draft · In progress' : 'Draft — tap to continue')
+                            ? (isActive ? 'Draft · In progress' : 'Draft, tap to continue')
                             : `${saved.trip.start_date} to ${saved.trip.end_date}`}
                         </p>
                       </div>

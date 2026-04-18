@@ -55,7 +55,7 @@ export default function EmptyDashboard() {
             <div className="absolute top-full left-0 mt-1 w-64 bg-surface border border-white/[0.04] rounded-sm shadow-lg shadow-black/60 z-50 overflow-hidden">
               <div className="p-1.5">
                 <p className="px-2 py-1 text-[9px] font-semibold uppercase tracking-widest text-dim">Signed in</p>
-                <p className="px-2 py-1 text-[12px] text-muted truncate">{user?.email ?? '—'}</p>
+                <p className="px-2 py-1 text-[12px] text-muted truncate">{user?.email ?? '-'}</p>
               </div>
               <div className="border-t border-t-white/[0.03]" />
               <div className="p-1.5">

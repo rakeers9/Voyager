@@ -71,7 +71,7 @@ export default function ShareTripModal({ tripTitle, shareUrl, onClose }: ShareTr
           <div className="flex items-start gap-2 text-[11px] text-dim leading-relaxed">
             <Globe size={13} className="text-info shrink-0 mt-0.5" />
             <p>
-              Anyone with this link can view this trip — no sign-in required.
+              Anyone with this link can view this trip. No sign-in required.
               They can explore the map and timeline but cannot make edits.
             </p>
           </div>

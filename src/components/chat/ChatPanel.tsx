@@ -97,7 +97,7 @@ export default function ChatPanel() {
             {isBuilding ? (
               <><Loader2 size={14} className="animate-spin" /> Building trip...</>
             ) : (
-              <><Rocket size={14} /> Build Trip — {currentPlan.stops.length} stops</>
+              <><Rocket size={14} /> Build Trip, {currentPlan.stops.length} stops</>
             )}
           </button>
         </div>
@@ -127,7 +127,7 @@ export default function ChatPanel() {
         <div className="mt-2 flex items-start gap-1.5 text-[10.5px] leading-[1.45] text-dim">
           <AlertCircle size={11} className="shrink-0 mt-[2px] text-muted" />
           <p>
-            <span className="text-muted">Tip —</span> for best results, draft your
+            <span className="text-muted">Tip:</span> for best results, draft your
             itinerary with a dedicated AI (ChatGPT, Claude, Gemini) or your own
             research first. This chatbot can sketch plans, but it&apos;s not the
             strongest planner. Once your plan is vetted, paste it here to visualize
@@ -152,7 +152,7 @@ function EmptyState() {
       <div className="mt-4 space-y-1.5 text-[11px] text-dim">
         <p>"3-day road trip from LA to Joshua Tree"</p>
         <p>"Weekend getaway from SF to Big Sur"</p>
-        <p>"2 days in Scotland — Edinburgh and Glasgow"</p>
+        <p>"2 days in Scotland, Edinburgh and Glasgow"</p>
       </div>
     </div>
   );

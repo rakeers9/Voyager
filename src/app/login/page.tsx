@@ -220,7 +220,7 @@ function LoginInner() {
           </h1>
           <p className="mt-4 text-[14px] text-muted max-w-md leading-relaxed">
             Plan, visualize, and run every trip from a single command surface.
-            Timeline, map, and live intel — always in sync.
+            Timeline, map, and live intel, always in sync.
           </p>
 
           <div className="mt-10 grid grid-cols-2 gap-3 max-w-md">

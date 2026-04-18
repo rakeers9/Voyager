@@ -222,7 +222,7 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
                       <div className="flex-1 min-w-0">
                         <p className="text-[13px] truncate">{saved.trip.title}</p>
                         <p className="text-[10px] font-mono text-dim">
-                          {saved.trip.status === 'draft' ? 'Draft — tap to continue' : `${saved.trip.start_date} to ${saved.trip.end_date}`}
+                          {saved.trip.status === 'draft' ? 'Draft, tap to continue' : `${saved.trip.start_date} to ${saved.trip.end_date}`}
                         </p>
                       </div>
                       {isActive && <div className="w-1.5 h-1.5 rounded-full bg-info shrink-0" />}
