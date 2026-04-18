@@ -58,7 +58,10 @@ export async function GET(request: NextRequest) {
     const photoRes = await fetch(photoUrl, { redirect: 'follow' });
 
     if (!photoRes.ok) {
-      return NextResponse.json({ error: 'Photo fetch failed' }, { status: 502 });
+      return NextResponse.json(
+        { error: 'Photo fetch failed' },
+        { status: 502, headers: { 'Cache-Control': 'no-store' } }
+      );
     }
 
     const contentType = photoRes.headers.get('content-type') || 'image/jpeg';

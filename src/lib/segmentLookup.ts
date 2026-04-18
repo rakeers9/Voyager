@@ -22,7 +22,7 @@ export function findSegmentAtTime(
     const seg = segments[mid];
     if (time < seg.startTime) {
       hi = mid - 1;
-    } else if (time > seg.endTime) {
+    } else if (time >= seg.endTime) {
       lo = mid + 1;
     } else {
       const duration = seg.endTime - seg.startTime;

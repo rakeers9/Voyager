@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 const SPEEDS = [1, 2, 10, 50];
 
 export default function PlaybackControls() {
-  const tz = useTripStore((s) => s.trip.timezone);
+  const tz = useTripStore((s) => s.trip?.timezone ?? 'UTC');
   const isPlaying = usePlaybackStore((s) => s.isPlaying);
   const playbackSpeed = usePlaybackStore((s) => s.playbackSpeed);
   const cursorTime = usePlaybackStore((s) => s.cursorTime);

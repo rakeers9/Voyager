@@ -7,6 +7,15 @@ import type { PlaybackState } from '@/types/playback';
 import useTripStore from './tripStore';
 
 function computeDerivedState(cursorTime: number, segments: Segment[]) {
+  if (!segments.length) {
+    return {
+      currentSegmentIndex: 0,
+      currentSegment: null,
+      progressInSegment: 0,
+      currentPosition: { lat: 0, lng: 0 },
+    };
+  }
+
   const { index, progress } = findSegmentAtTime(segments, cursorTime);
   const segment = segments[index] ?? null;
 
@@ -30,6 +39,7 @@ function computeDerivedState(cursorTime: number, segments: Segment[]) {
 interface InternalPlaybackState extends PlaybackState {
   _rafId: number | null;
   _lastFrameTime: number | null;
+  reinitialize: () => void;
 }
 
 const usePlaybackStore = create<InternalPlaybackState>((set, get) => {
@@ -48,6 +58,29 @@ const usePlaybackStore = create<InternalPlaybackState>((set, get) => {
 
     _rafId: null,
     _lastFrameTime: null,
+
+    reinitialize: () => {
+      // Cancel any active playback
+      const { _rafId } = get();
+      if (_rafId) cancelAnimationFrame(_rafId);
+
+      // Re-read from trip store
+      const segs = useTripStore.getState().segments;
+      const start = segs[0]?.startTime ?? 0;
+      const end = segs[segs.length - 1]?.endTime ?? 0;
+      const derived = computeDerivedState(start, segs);
+
+      set({
+        isPlaying: false,
+        playbackSpeed: 1,
+        cursorTime: start,
+        tripStartTime: start,
+        tripEndTime: end,
+        _rafId: null,
+        _lastFrameTime: null,
+        ...derived,
+      });
+    },
 
     play: () => {
       const state = get();
@@ -121,14 +154,41 @@ const usePlaybackStore = create<InternalPlaybackState>((set, get) => {
     stepForward: () => {
       const { currentSegmentIndex } = get();
       const segs = useTripStore.getState().segments;
+      if (!segs.length) return;
       const nextIndex = Math.min(currentSegmentIndex + 1, segs.length - 1);
       const segment = segs[nextIndex];
       set({ cursorTime: segment.startTime, ...computeDerivedState(segment.startTime, segs) });
     },
 
+    setBounds: (start: number, end: number, cursor?: number) => {
+      const { _rafId, cursorTime } = get();
+      if (_rafId) cancelAnimationFrame(_rafId);
+      const segs = useTripStore.getState().segments;
+      // If an explicit cursor is given, use it. Otherwise preserve the
+      // current cursor when it's already inside the new range, else snap
+      // to the start.
+      const inRange = cursorTime >= start && cursorTime <= end;
+      const nextCursor =
+        cursor !== undefined
+          ? Math.max(start, Math.min(end, cursor))
+          : inRange
+            ? cursorTime
+            : start;
+      set({
+        tripStartTime: start,
+        tripEndTime: end,
+        cursorTime: nextCursor,
+        isPlaying: false,
+        _rafId: null,
+        _lastFrameTime: null,
+        ...computeDerivedState(nextCursor, segs),
+      });
+    },
+
     stepBackward: () => {
       const { currentSegmentIndex, cursorTime } = get();
       const segs = useTripStore.getState().segments;
+      if (!segs.length) return;
       const currentSeg = segs[currentSegmentIndex];
       const targetIndex =
         cursorTime > currentSeg.startTime + 1000

@@ -19,7 +19,7 @@ export default function GanttBar() {
   const seekTo = usePlaybackStore((s) => s.seekTo);
   const jumpToSegment = usePlaybackStore((s) => s.jumpToSegment);
 
-  const tz = trip.timezone;
+  const tz = trip?.timezone ?? 'UTC';
   const totalDuration = tripEndTime - tripStartTime;
   const playheadPos =
     totalDuration > 0 ? ((cursorTime - tripStartTime) / totalDuration) * 100 : 0;

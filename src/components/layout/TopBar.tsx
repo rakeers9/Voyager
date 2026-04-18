@@ -1,30 +1,47 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  ChevronDown, LogOut, Map, Compass,
-  Play, Pause, SkipBack, SkipForward, ListOrdered,
+  ChevronDown, LogOut, Map, Compass, Plus,
+  Play, Pause, SkipBack, SkipForward, ListOrdered, Trash2,
+  MoreVertical, Share2,
 } from 'lucide-react';
 import useTripStore from '@/stores/tripStore';
 import usePlaybackStore from '@/stores/playbackStore';
+import useTripsListStore from '@/stores/tripsListStore';
 import { getSegmentColor } from '@/lib/colors';
 import { formatTime, formatDate, getDayStartMs } from '@/lib/time';
+import { useAuth } from '@/hooks/useAuth';
+import { createDraftTrip } from '@/lib/createDraftTrip';
 import ItineraryModal from '../ItineraryModal';
-
-const MOCK_TRIPS = [
-  { id: 'trip-yosemite-2026', title: 'Yosemite Road Trip', dates: 'Jun 11–13, 2026', active: true },
-  { id: 'trip-tahoe-2026', title: 'Lake Tahoe Weekend', dates: 'Jul 18–20, 2026', active: false },
-  { id: 'trip-pch-2026', title: 'PCH Road Trip', dates: 'Aug 5–9, 2026', active: false },
-];
+import ShareTripModal from '../ShareTripModal';
+import EditableText from '../inline/EditableText';
 
 const MIN_SPEED = 1;
 const MAX_SPEED = 500;
 
-export default function TopBar() {
+export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}) {
+  const router = useRouter();
   const trip = useTripStore((s) => s.trip);
   const stats = useTripStore((s) => s.stats);
   const segments = useTripStore((s) => s.segments);
-  const tz = trip.timezone;
+
+  const savedTrips = useTripsListStore((s) => s.trips);
+  const activeTripId = useTripsListStore((s) => s.activeTripId);
+  const switchToTrip = useTripsListStore((s) => s.switchToTrip);
+  const deleteTrip = useTripsListStore((s) => s.deleteTrip);
+  const renameTrip = useTripsListStore((s) => s.renameTrip);
+  const loaded = useTripsListStore((s) => s.loaded);
+  const loadFromSupabase = useTripsListStore((s) => s.loadFromSupabase);
+
+  const { user, signOut } = useAuth();
+
+  // Load saved trips from Supabase on mount (once).
+  // Skip in read-only (shared) mode — viewer doesn't need a trip list.
+  useEffect(() => {
+    if (!readOnly && !loaded && user) loadFromSupabase();
+  }, [readOnly, loaded, user, loadFromSupabase]);
 
   const isPlaying = usePlaybackStore((s) => s.isPlaying);
   const playbackSpeed = usePlaybackStore((s) => s.playbackSpeed);
@@ -41,18 +58,27 @@ export default function TopBar() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [itineraryOpen, setItineraryOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [tripMenuOpen, setTripMenuOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [confirmDeleteActive, setConfirmDeleteActive] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const tripMenuRef = useRef<HTMLDivElement>(null);
   const scrubberRef = useRef<HTMLDivElement>(null);
 
   const totalDuration = tripEndTime - tripStartTime;
   const playheadPos = totalDuration > 0 ? ((cursorTime - tripStartTime) / totalDuration) * 100 : 0;
+  const tz = trip?.timezone ?? 'UTC';
 
   // Day dividers for scrubber
   const dayDividers: { pos: number }[] = [];
-  for (let d = 1; d <= 2; d++) {
-    const dayMs = getDayStartMs(d + 1, tripStartTime, tz);
-    const pos = ((dayMs - tripStartTime) / totalDuration) * 100;
-    if (pos > 0 && pos < 100) dayDividers.push({ pos });
+  if (trip && stats) {
+    for (let d = 1; d <= stats.totalDays - 1; d++) {
+      const dayMs = getDayStartMs(d + 1, tripStartTime, tz);
+      const pos = ((dayMs - tripStartTime) / totalDuration) * 100;
+      if (pos > 0 && pos < 100) dayDividers.push({ pos });
+    }
   }
 
   // Close dropdown on outside click
@@ -61,11 +87,49 @@ export default function TopBar() {
     const handleClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
+        setConfirmDeleteId(null);
       }
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [menuOpen]);
+
+  // Close trip menu on outside click
+  useEffect(() => {
+    if (!tripMenuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (tripMenuRef.current && !tripMenuRef.current.contains(e.target as Node)) {
+        setTripMenuOpen(false);
+        setConfirmDeleteActive(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [tripMenuOpen]);
+
+  const handleShare = () => {
+    if (!trip) return;
+    setTripMenuOpen(false);
+    setShareOpen(true);
+  };
+
+  const shareUrl = trip ? `${typeof window !== 'undefined' ? window.location.origin : ''}/share/${trip.id}` : '';
+
+  const handleDeleteActive = async () => {
+    if (!trip) return;
+    setDeleting(true);
+    await deleteTrip(trip.id);
+    setDeleting(false);
+    setConfirmDeleteActive(false);
+    setTripMenuOpen(false);
+  };
+
+  const handleConfirmDelete = async (tripId: string) => {
+    setDeleting(true);
+    await deleteTrip(tripId);
+    setDeleting(false);
+    setConfirmDeleteId(null);
+  };
 
   // Scrubber click
   const handleScrubberClick = useCallback(
@@ -81,48 +145,126 @@ export default function TopBar() {
 
   return (
     <div className="flex items-center gap-3 px-4 h-11 border-b border-white/[0.04] bg-base shrink-0">
-      {/* Logo dropdown */}
+      {/* Logo dropdown (interactive only when not read-only) */}
       <div ref={menuRef} className="relative shrink-0">
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-elevated/60 transition-colors"
+          onClick={() => { if (!readOnly) setMenuOpen(!menuOpen); }}
+          disabled={readOnly}
+          className={`flex items-center gap-2 px-2 py-1.5 rounded-sm transition-colors ${
+            readOnly ? 'cursor-default' : 'hover:bg-elevated/60'
+          }`}
         >
           <div className="w-5 h-5 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
             <Compass size={12} className="text-info" />
           </div>
           <span className="text-heading font-semibold text-[13px] tracking-wide">VOYAGER</span>
-          <ChevronDown size={11} className={`text-dim transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+          {!readOnly && (
+            <ChevronDown size={11} className={`text-dim transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+          )}
         </button>
 
-        {menuOpen && (
+        {menuOpen && !readOnly && (
           <div className="absolute top-full left-0 mt-1 w-64 bg-surface border border-white/[0.04] rounded-sm shadow-lg shadow-black/60 z-50 overflow-hidden">
             <div className="p-1.5">
               <p className="px-2 py-1 text-[9px] font-semibold uppercase tracking-widest text-dim">Your Trips</p>
-              {MOCK_TRIPS.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setMenuOpen(false)}
-                  className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-sm text-left transition-colors ${
-                    t.active ? 'bg-info/8 text-heading' : 'text-muted hover:text-primary hover:bg-elevated/50'
-                  }`}
-                >
-                  <Map size={13} className={t.active ? 'text-info' : 'text-dim'} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] truncate">{t.title}</p>
-                    <p className="text-[10px] font-mono text-dim">{t.dates}</p>
+              {savedTrips.map((saved) => {
+                const isActive = saved.trip.id === activeTripId;
+                const isConfirming = confirmDeleteId === saved.trip.id;
+
+                if (isConfirming) {
+                  return (
+                    <div
+                      key={saved.trip.id}
+                      className="flex items-center gap-2 px-2 py-2 rounded-sm bg-danger/8 border border-danger/20"
+                    >
+                      <Trash2 size={13} className="text-danger shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] text-heading truncate">Delete &ldquo;{saved.trip.title}&rdquo;?</p>
+                        <p className="text-[10px] text-dim">This cannot be undone.</p>
+                      </div>
+                      <button
+                        disabled={deleting}
+                        onClick={(e) => { e.stopPropagation(); handleConfirmDelete(saved.trip.id); }}
+                        className="text-[11px] font-medium px-2 py-1 rounded-sm bg-danger/20 text-danger hover:bg-danger/30 disabled:opacity-50 transition-colors"
+                      >
+                        {deleting ? '...' : 'Delete'}
+                      </button>
+                      <button
+                        disabled={deleting}
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
+                        className="text-[11px] px-2 py-1 rounded-sm text-dim hover:text-primary hover:bg-elevated/50 disabled:opacity-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    key={saved.trip.id}
+                    className={`group w-full flex items-center gap-1 pr-1 rounded-sm transition-colors ${
+                      isActive ? 'bg-info/8 text-heading' : 'text-muted hover:text-primary hover:bg-elevated/50'
+                    }`}
+                  >
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (saved.trip.status === 'draft') {
+                          router.push(`/new?id=${saved.trip.id}`);
+                        } else {
+                          switchToTrip(saved.trip.id);
+                        }
+                      }}
+                      className="flex items-center gap-2.5 flex-1 min-w-0 px-2 py-2 text-left"
+                    >
+                      <Map size={13} className={isActive ? 'text-info' : 'text-dim'} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] truncate">{saved.trip.title}</p>
+                        <p className="text-[10px] font-mono text-dim">
+                          {saved.trip.status === 'draft' ? 'Draft — tap to continue' : `${saved.trip.start_date} to ${saved.trip.end_date}`}
+                        </p>
+                      </div>
+                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-info shrink-0" />}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(saved.trip.id); }}
+                      title="Delete trip"
+                      className="shrink-0 flex items-center justify-center w-6 h-6 rounded-sm text-dim opacity-0 group-hover:opacity-100 hover:text-danger hover:bg-danger/10 transition-all"
+                    >
+                      <Trash2 size={12} />
+                    </button>
                   </div>
-                  {t.active && <div className="w-1.5 h-1.5 rounded-full bg-info shrink-0" />}
-                </button>
-              ))}
+                );
+              })}
             </div>
             <div className="border-t border-t-white/[0.03]" />
             <div className="p-1.5">
               <button
-                onClick={() => setMenuOpen(false)}
+                onClick={async () => {
+                  setMenuOpen(false);
+                  const result = await createDraftTrip();
+                  if (result) {
+                    useTripsListStore.getState().addDraftTrip(result.trip);
+                    router.push(`/new?id=${result.id}`);
+                  } else {
+                    router.push('/new');
+                  }
+                }}
+                className="w-full flex items-center gap-2.5 px-2 py-2 rounded-sm text-info hover:bg-info/8 transition-colors text-left"
+              >
+                <Plus size={13} />
+                <span className="text-[13px] font-medium">New Trip</span>
+              </button>
+            </div>
+            <div className="border-t border-t-white/[0.03]" />
+            <div className="p-1.5">
+              <button
+                onClick={() => { setMenuOpen(false); signOut(); }}
                 className="w-full flex items-center gap-2.5 px-2 py-2 rounded-sm text-dim hover:text-primary hover:bg-elevated/50 transition-colors text-left"
               >
                 <LogOut size={13} />
-                <span className="text-[13px]">Log out</span>
+                <span className="text-[13px]">{user ? 'Log out' : 'Sign in'}</span>
               </button>
             </div>
           </div>
@@ -131,17 +273,94 @@ export default function TopBar() {
 
       <div className="w-px h-4 bg-white/[0.03] shrink-0" />
 
-      {/* Trip title + itinerary button */}
-      <h1 className="text-heading font-semibold text-[13px] tracking-wide uppercase shrink-0">
-        {trip.title}
-      </h1>
-      <button
-        onClick={() => setItineraryOpen(true)}
-        className="shrink-0 flex items-center justify-center w-6 h-6 rounded-sm text-dim hover:text-heading hover:bg-white/[0.06] transition-colors"
-        title="View full itinerary"
-      >
-        <ListOrdered size={14} />
-      </button>
+      {/* Trip title + menu */}
+      {trip && !readOnly ? (
+        <h1 className="text-heading font-semibold text-[13px] tracking-wide uppercase shrink-0 max-w-[40ch] truncate">
+          <EditableText
+            value={trip.title}
+            onSave={(next) => renameTrip(trip.id, next)}
+            placeholder="Untitled Trip"
+            ariaLabel="Edit trip title"
+            className="block truncate"
+          />
+        </h1>
+      ) : (
+        <h1 className="text-heading font-semibold text-[13px] tracking-wide uppercase shrink-0 truncate max-w-[40ch]">
+          {trip?.title ?? 'Untitled Trip'}
+        </h1>
+      )}
+
+      {readOnly ? (
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-dim px-1.5 py-0.5 rounded-sm border border-white/[0.06] bg-white/[0.02]">
+            Shared · Read-only
+          </span>
+          <button
+            onClick={() => router.push('/login')}
+            className="text-[11px] font-medium px-2 py-1 rounded-sm bg-info/15 text-info hover:bg-info/25 transition-colors"
+          >
+            Sign in to build your own
+          </button>
+        </div>
+      ) : (
+      <div ref={tripMenuRef} className="relative shrink-0">
+        <button
+          onClick={() => { setTripMenuOpen((o) => !o); setConfirmDeleteActive(false); }}
+          disabled={!trip}
+          className="flex items-center justify-center w-6 h-6 rounded-sm text-dim hover:text-heading hover:bg-white/[0.06] transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
+          title="Trip menu"
+        >
+          <MoreVertical size={14} />
+        </button>
+
+        {tripMenuOpen && trip && (
+          <div className="absolute top-full left-0 mt-1 w-48 bg-surface border border-white/[0.04] rounded-sm shadow-lg shadow-black/60 z-50 overflow-hidden">
+            {confirmDeleteActive ? (
+              <div className="p-2 bg-danger/8">
+                <p className="text-[11px] text-heading mb-2 leading-snug">
+                  Delete &ldquo;{trip.title}&rdquo;? This cannot be undone.
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    disabled={deleting}
+                    onClick={handleDeleteActive}
+                    className="flex-1 text-[11px] font-medium px-2 py-1 rounded-sm bg-danger/20 text-danger hover:bg-danger/30 disabled:opacity-50 transition-colors"
+                  >
+                    {deleting ? '...' : 'Delete'}
+                  </button>
+                  <button
+                    disabled={deleting}
+                    onClick={() => setConfirmDeleteActive(false)}
+                    className="flex-1 text-[11px] px-2 py-1 rounded-sm text-dim hover:text-primary hover:bg-elevated/50 disabled:opacity-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-1">
+                <TripMenuItem
+                  icon={<ListOrdered size={13} />}
+                  label="View Itinerary"
+                  onClick={() => { setTripMenuOpen(false); setItineraryOpen(true); }}
+                />
+                <TripMenuItem
+                  icon={<Share2 size={13} />}
+                  label="Share Trip"
+                  onClick={handleShare}
+                />
+                <TripMenuItem
+                  icon={<Trash2 size={13} />}
+                  label="Delete Trip"
+                  danger
+                  onClick={() => setConfirmDeleteActive(true)}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      )}
 
       <div className="w-px h-4 bg-white/[0.03] shrink-0" />
 
@@ -234,6 +453,13 @@ export default function TopBar() {
 
       {/* Itinerary modal */}
       {itineraryOpen && <ItineraryModal onClose={() => setItineraryOpen(false)} />}
+      {shareOpen && trip && (
+        <ShareTripModal
+          tripTitle={trip.title}
+          shareUrl={shareUrl}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -310,6 +536,29 @@ function SpeedDial({ speed, setSpeed }: { speed: number; setSpeed: (s: number) =
       )}
       <span className="text-[10px] font-mono text-dim">x</span>
     </div>
+  );
+}
+
+function TripMenuItem({
+  icon, label, onClick, danger = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-sm text-left transition-colors ${
+        danger
+          ? 'text-dim hover:text-danger hover:bg-danger/10'
+          : 'text-muted hover:text-primary hover:bg-elevated/50'
+      }`}
+    >
+      <span className={danger ? '' : 'text-dim'}>{icon}</span>
+      <span className="text-[13px]">{label}</span>
+    </button>
   );
 }
 

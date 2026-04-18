@@ -9,12 +9,14 @@ import { formatTime, formatDuration, formatDistance } from '@/lib/time';
 import { isStopSegment, isTransitSegment } from '@/types/segment';
 import type { Segment } from '@/types/segment';
 
-const MIN_HEIGHT = 28;
+const MIN_HEIGHT = 0;
 const MAX_HEIGHT = 400;
 const DEFAULT_HEIGHT = 140;
+const COLLAPSE_THRESHOLD = 40;
 
 export default function UpNextBar() {
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
+  const [collapsed, setCollapsed] = useState(false);
   const dragging = useRef(false);
   const startY = useRef(0);
   const startHeight = useRef(DEFAULT_HEIGHT);
@@ -22,21 +24,29 @@ export default function UpNextBar() {
   const currentSegmentIndex = usePlaybackStore((s) => s.currentSegmentIndex);
   const jumpToSegment = usePlaybackStore((s) => s.jumpToSegment);
   const segments = useTripStore((s) => s.segments);
-  const tz = useTripStore((s) => s.trip.timezone);
+  const tz = useTripStore((s) => s.trip?.timezone ?? 'UTC');
 
   const upNext = segments.slice(currentSegmentIndex + 1, currentSegmentIndex + 12);
+
+  const effectiveHeight = collapsed ? 0 : height;
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     dragging.current = true;
     startY.current = e.clientY;
-    startHeight.current = height;
+    startHeight.current = collapsed ? 0 : height;
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [height]);
+  }, [height, collapsed]);
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
     if (!dragging.current) return;
     const delta = startY.current - e.clientY;
-    setHeight(Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, startHeight.current + delta)));
+    const newHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, startHeight.current + delta));
+    if (newHeight < COLLAPSE_THRESHOLD) {
+      setCollapsed(true);
+    } else {
+      setCollapsed(false);
+      setHeight(newHeight);
+    }
   }, []);
 
   const onPointerUp = useCallback(() => {
@@ -51,58 +61,61 @@ export default function UpNextBar() {
 
   if (upNext.length === 0) return null;
 
-  // How much detail to show based on height
-  const collapsed = height < 50;
+  const showContent = !collapsed && height >= 50;
   const expanded = height > 180;
   const fullDetail = height > 280;
 
   return (
-    <div
-      className="border-t border-white/[0.04] bg-[#09090B]/70 backdrop-blur-xl flex flex-col overflow-hidden"
-      style={{ height }}
-    >
-      {/* Drag handle */}
+    <div className="relative">
+      {/* Drag handle — drag to resize or collapse */}
       <div
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        className="flex items-center justify-center gap-2 py-1 cursor-ns-resize select-none hover:bg-white/[0.02] transition-colors shrink-0"
+        title="Drag to resize · drag fully down to collapse"
+        className="flex items-center justify-center py-1 cursor-ns-resize select-none hover:bg-white/[0.02] transition-colors border-t border-white/[0.04] bg-[#09090B]/70 backdrop-blur-xl"
       >
         <GripHorizontal size={14} className="text-dim" />
       </div>
 
-      {!collapsed && (
-        <>
-          {/* Header */}
-          <div className="flex items-center gap-2 px-4 pb-1.5 shrink-0">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted">
-              Up Next
-            </span>
-            <span className="text-[10px] font-mono text-dim ml-auto">{upNext.length} segments</span>
-          </div>
+      {/* Expandable content */}
+      <div
+        className="bg-[#09090B]/70 backdrop-blur-xl flex flex-col overflow-hidden transition-[height] duration-200 ease-out"
+        style={{ height: effectiveHeight }}
+      >
+        {showContent && (
+          <>
+            {/* Header */}
+            <div className="flex items-center gap-2 px-4 pb-1.5 pt-1 shrink-0">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-muted">
+                Up Next
+              </span>
+              <span className="text-[10px] font-mono text-dim ml-auto">{upNext.length} segments</span>
+            </div>
 
-          {/* Cards */}
-          <div
-            className="flex-1 flex gap-2.5 px-4 pb-3 overflow-x-auto overflow-y-hidden min-h-0"
-            style={{ scrollbarWidth: 'none' }}
-          >
-            {upNext.map((seg, i) => {
-              const idx = currentSegmentIndex + 1 + i;
-              return (
-                <UpNextCard
-                  key={seg.id}
-                  segment={seg}
-                  index={idx}
-                  tz={tz}
-                  expanded={expanded}
-                  fullDetail={fullDetail}
-                  onJump={jumpToSegment}
-                />
-              );
-            })}
-          </div>
-        </>
-      )}
+            {/* Cards */}
+            <div
+              className="flex-1 flex gap-2.5 px-4 pb-3 overflow-x-auto overflow-y-hidden min-h-0"
+              style={{ scrollbarWidth: 'none' }}
+            >
+              {upNext.map((seg, i) => {
+                const idx = currentSegmentIndex + 1 + i;
+                return (
+                  <UpNextCard
+                    key={seg.id}
+                    segment={seg}
+                    index={idx}
+                    tz={tz}
+                    expanded={expanded}
+                    fullDetail={fullDetail}
+                    onJump={jumpToSegment}
+                  />
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

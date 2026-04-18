@@ -18,4 +18,6 @@ export interface PlaybackState {
   jumpToSegment: (index: number) => void;
   stepForward: () => void;
   stepBackward: () => void;
+  reinitialize: () => void;
+  setBounds: (start: number, end: number, cursor?: number) => void;
 }

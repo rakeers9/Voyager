@@ -13,9 +13,11 @@ export default function ItineraryModal({ onClose }: { onClose: () => void }) {
   const trip = useTripStore((s) => s.trip);
   const segments = useTripStore((s) => s.segments);
   const stats = useTripStore((s) => s.stats);
-  const tz = trip.timezone;
   const contentRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
+
+  if (!trip || !stats) return null;
+  const tz = trip.timezone;
 
   // Group segments by day
   const days: { day: number; label: string; segments: Segment[] }[] = [];

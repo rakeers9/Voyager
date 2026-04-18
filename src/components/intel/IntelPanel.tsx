@@ -13,19 +13,24 @@ import { formatTime, formatDuration, formatDistance, getDayOfTrip } from '@/lib/
 import type { StopSegment, TransitSegment } from '@/types/segment';
 import { isStopSegment } from '@/types/segment';
 import { usePlaceDetails } from '@/hooks/usePlaceDetails';
+import EditableText from '@/components/inline/EditableText';
+import EditableMultiline from '@/components/inline/EditableMultiline';
+import { patchSegment } from '@/lib/segmentSync';
 import type { ReactNode } from 'react';
 
 export default function IntelPanel() {
-  const currentSegment = usePlaybackStore((s) => s.currentSegment);
   const currentSegmentIndex = usePlaybackStore((s) => s.currentSegmentIndex);
   const progressInSegment = usePlaybackStore((s) => s.progressInSegment);
   const segments = useTripStore((s) => s.segments);
   const stats = useTripStore((s) => s.stats);
   const trip = useTripStore((s) => s.trip);
-  const jumpToSegment = usePlaybackStore((s) => s.jumpToSegment);
   const cursorTime = usePlaybackStore((s) => s.cursorTime);
 
-  if (!currentSegment) return null;
+  // Read the live segment from tripStore so inline edits reflect immediately
+  // (playbackStore.currentSegment is a snapshot taken at cursor change).
+  const currentSegment = segments[currentSegmentIndex] ?? null;
+
+  if (!currentSegment || !trip || !stats) return null;
 
   const tz = trip.timezone;
   const color = getSegmentColor(currentSegment);
@@ -60,8 +65,14 @@ export default function IntelPanel() {
         {/* Title + time block */}
         <div className="px-4 pt-4 pb-3">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <h2 className="text-heading text-lg font-bold leading-snug">
-              {currentSegment.title}
+            <h2 className="text-heading text-lg font-bold leading-snug flex-1 min-w-0">
+              <EditableText
+                value={currentSegment.title}
+                onSave={(next) => patchSegment(currentSegment.id, { title: next })}
+                placeholder="Untitled"
+                ariaLabel="Edit segment title"
+                className="block break-words"
+              />
             </h2>
             <span className="text-[10px] font-mono text-dim mt-1 shrink-0">
               {currentSegmentIndex + 1}/{segments.length}
@@ -97,15 +108,20 @@ export default function IntelPanel() {
             />
           </div>
 
-          {/* Notes — pinned directly under the title/time block */}
-          {currentSegment.details.notes && (
-            <div className="mt-3">
-              <SectionLabel label="Notes" />
-              <div className="mt-2 px-3 py-2.5 bg-white/[0.02] rounded-sm border border-white/[0.04] text-[13px] text-muted italic leading-relaxed">
-                {currentSegment.details.notes}
-              </div>
+          {/* Notes — always available; click to add */}
+          <div className="mt-3">
+            <SectionLabel label="Notes" />
+            <div className="mt-2 text-[13px] text-muted">
+              <EditableMultiline
+                value={currentSegment.details.notes ?? ''}
+                onSave={(next) =>
+                  patchSegment(currentSegment.id, { details: { notes: next } })
+                }
+                placeholder="Add notes…  (⌘/Ctrl+Enter to save, Esc to cancel)"
+                ariaLabel="Edit notes"
+              />
             </div>
-          )}
+          </div>
         </div>
 
         <div className="h-px bg-white/[0.04]" />
@@ -366,18 +382,77 @@ function PlaceDetailsSection({ query, segment }: { query: string; segment: { lat
 
 function StopDetail({ segment }: { segment: StopSegment }) {
   const d = segment.details;
+  const showCuisine = segment.category === 'meal' || !!d.cuisine;
+  const showDifficulty = segment.category === 'activity' || !!d.trail_difficulty;
+  const showConfirmation =
+    segment.category === 'accommodation' ||
+    segment.category === 'transit_hub' ||
+    !!d.confirmation_number;
+
   return (
-    <div className="space-y-2">
-      {d.description && (
-        <p className="text-[13px] text-primary leading-relaxed">{d.description}</p>
-      )}
+    <div className="space-y-3">
+      <div className="text-[13px] text-primary leading-relaxed">
+        <EditableMultiline
+          value={d.description ?? ''}
+          onSave={(next) =>
+            patchSegment(segment.id, { details: { description: next } })
+          }
+          placeholder="Add a description…"
+          ariaLabel="Edit description"
+        />
+      </div>
       <div className="space-y-0.5">
-        {d.cuisine && <DetailRow icon={null} label="Cuisine" value={d.cuisine} />}
-        {d.trail_difficulty && (
-          <DetailRow icon={<Route size={12} className="text-activity" />} label="Difficulty" value={d.trail_difficulty} />
+        {showCuisine && (
+          <DetailRow
+            icon={null}
+            label="Cuisine"
+            value={
+              <EditableText
+                value={d.cuisine ?? ''}
+                onSave={(next) =>
+                  patchSegment(segment.id, { details: { cuisine: next } })
+                }
+                placeholder="Add cuisine"
+                ariaLabel="Edit cuisine"
+              />
+            }
+          />
         )}
-        {d.confirmation_number && (
-          <DetailRow icon={null} label="Confirmation" value={<span className="font-mono text-[12px]">{d.confirmation_number}</span>} />
+        {showDifficulty && (
+          <DetailRow
+            icon={<Route size={12} className="text-activity" />}
+            label="Difficulty"
+            value={
+              <EditableText
+                value={d.trail_difficulty ?? ''}
+                onSave={(next) =>
+                  patchSegment(segment.id, { details: { trail_difficulty: next } })
+                }
+                placeholder="Add difficulty"
+                ariaLabel="Edit difficulty"
+              />
+            }
+          />
+        )}
+        {showConfirmation && (
+          <DetailRow
+            icon={null}
+            label="Confirmation"
+            value={
+              <span className="font-mono text-[12px]">
+                <EditableText
+                  value={d.confirmation_number ?? ''}
+                  onSave={(next) =>
+                    patchSegment(segment.id, {
+                      details: { confirmation_number: next },
+                    })
+                  }
+                  placeholder="Add confirmation #"
+                  ariaLabel="Edit confirmation number"
+                />
+              </span>
+            }
+          />
         )}
       </div>
     </div>
