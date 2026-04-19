@@ -71,6 +71,7 @@ function LoginInner() {
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSending, setForgotSending] = useState(false);
+  const [easterMessage, setEasterMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (searchParams.get('error') === 'auth') {
@@ -222,12 +223,20 @@ function LoginInner() {
             <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
             Systems Nominal
           </div>
-          <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setEasterMessage('WASSSSSSUP GOOOOBA')}
+            className="flex items-center gap-2 hover:text-heading transition-colors cursor-pointer"
+          >
             <Shield size={12} /> Encrypted
-          </div>
-          <div className="flex items-center gap-2">
+          </button>
+          <button
+            type="button"
+            onClick={() => setEasterMessage('WASSSSUPPPPPP CHUNGUUUUUUUUUU')}
+            className="flex items-center gap-2 hover:text-heading transition-colors cursor-pointer"
+          >
             <Globe size={12} /> Global Routing
-          </div>
+          </button>
         </div>
       </aside>
 
@@ -514,6 +523,33 @@ function LoginInner() {
                 </div>
               </form>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Easter-egg popup */}
+      <AnimatePresence>
+        {easterMessage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 backdrop-blur-md px-6 cursor-pointer"
+            onClick={() => setEasterMessage(null)}
+          >
+            <motion.h2
+              initial={{ scale: 0.4, rotate: -8, opacity: 0 }}
+              animate={{ scale: 1, rotate: 0, opacity: 1 }}
+              exit={{ scale: 0.6, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 16 }}
+              className="text-heading font-black text-center leading-[0.95] tracking-tight select-none"
+              style={{
+                fontSize: 'clamp(48px, 12vw, 160px)',
+                textShadow: '0 0 60px rgba(167,139,250,0.45), 0 0 8px rgba(255,255,255,0.6)',
+              }}
+            >
+              {easterMessage}
+            </motion.h2>
           </motion.div>
         )}
       </AnimatePresence>
