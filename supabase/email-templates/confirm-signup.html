@@ -1,0 +1,224 @@
+<!--
+  Paste the body of this file into Supabase Dashboard →
+  Authentication → Email Templates → Confirm signup → "Message body".
+
+  Subject line suggestion: "Activate your TRIPSITR account"
+
+  Variables Supabase will interpolate:
+    {{ .ConfirmationURL }}  - the link to /api/auth/callback?code=...
+    {{ .Email }}            - the signup email address
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="supported-color-schemes" content="dark" />
+    <title>Activate your TRIPSITR account</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #09090b;
+      color: #d4d4d8;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    "
+  >
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="background-color: #09090b; padding: 40px 16px;"
+    >
+      <tr>
+        <td align="center">
+          <table
+            role="presentation"
+            width="520"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              max-width: 520px;
+              width: 100%;
+              background-color: #0e0e11;
+              border: 1px solid #2a2a30;
+              border-radius: 4px;
+            "
+          >
+            <!-- Header -->
+            <tr>
+              <td style="padding: 28px 32px 20px 32px; border-bottom: 1px solid #2a2a30;">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="vertical-align: middle; padding-right: 10px;">
+                      <!-- Orbital mark, white on dark -->
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 73 75"
+                        width="22"
+                        height="22"
+                        style="display: block;"
+                      >
+                        <g fill="#FAFAFA">
+                          <path fill-rule="evenodd" clip-rule="evenodd" d="M0 37.5959C0 17.3991 16.3727 1.02637 36.5696 1.02637C56.7663 1.02637 73.1392 17.3991 73.1392 37.5959C73.1392 57.7928 56.7663 74.1654 36.5696 74.1654C16.3727 74.1654 0 57.7928 0 37.5959ZM36.5696 4.76603C18.4381 4.76603 3.73967 19.4645 3.73967 37.5959C3.73967 55.7274 18.4381 70.4258 36.5696 70.4258C54.701 70.4258 69.3995 55.7274 69.3995 37.5959C69.3995 19.4645 54.701 4.76603 36.5696 4.76603Z" />
+                          <path fill-rule="evenodd" clip-rule="evenodd" d="M20.3023 16.694C24.3487 11.2747 30.0838 7.74433 36.5794 7.74433C43.0749 7.74433 48.81 11.2747 52.8564 16.694C56.9025 22.113 59.3495 29.5125 59.3495 37.6058C59.3495 45.6989 56.9025 53.0984 52.8564 58.5174C48.81 63.9366 43.0749 67.467 36.5794 67.467C30.0838 67.467 24.3487 63.9366 20.3023 58.5174C16.2561 53.0984 13.8092 45.6989 13.8092 37.6058C13.8092 29.5125 16.2561 22.113 20.3023 16.694ZM23.2988 18.9314C19.7805 23.6433 17.5488 30.2396 17.5488 37.6058C17.5488 44.9719 19.7805 51.568 23.2988 56.28C26.8169 60.9917 31.532 63.7274 36.5794 63.7274C41.6267 63.7274 46.3418 60.9917 49.8598 56.28C53.3781 51.568 55.6098 44.9719 55.6098 37.6058C55.6098 30.2396 53.3781 23.6433 49.8598 18.9314C46.3418 14.2197 41.6267 11.484 36.5794 11.484C31.532 11.484 26.8169 14.2197 23.2988 18.9314Z" />
+                          <path fill-rule="evenodd" clip-rule="evenodd" d="M18.5945 29.8384C18.9681 24.8845 21.0837 20.4254 25.1704 18.0659C29.257 15.7065 34.1765 16.1039 38.6535 18.2573C43.1407 20.4157 47.3809 24.4082 50.4158 29.6648C53.4506 34.9212 54.7881 40.5895 54.4136 45.5547C54.04 50.5085 51.9244 54.9676 47.8378 57.327C43.7511 59.6865 38.8316 59.2891 34.3546 57.1358C29.8674 54.9775 25.6272 50.985 22.5924 45.7286C19.5576 40.472 18.22 34.8036 18.5945 29.8384Z" />
+                        </g>
+                      </svg>
+                    </td>
+                    <td
+                      style="
+                        vertical-align: middle;
+                        font-size: 13px;
+                        font-weight: 700;
+                        letter-spacing: 0.18em;
+                        color: #fafafa;
+                        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                      "
+                    >
+                      TRIPSITR
+                    </td>
+                  </tr>
+                </table>
+                <p
+                  style="
+                    margin: 6px 0 0 0;
+                    font-size: 10px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.22em;
+                    color: #71717a;
+                    font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+                  "
+                >
+                  Trip Operations · Account Setup
+                </p>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding: 28px 32px 8px 32px;">
+                <h1
+                  style="
+                    margin: 0 0 12px 0;
+                    font-size: 22px;
+                    font-weight: 600;
+                    line-height: 1.25;
+                    color: #fafafa;
+                    letter-spacing: -0.01em;
+                  "
+                >
+                  Confirm your account
+                </h1>
+                <p
+                  style="
+                    margin: 0 0 20px 0;
+                    font-size: 14px;
+                    line-height: 1.55;
+                    color: #a1a1aa;
+                  "
+                >
+                  Welcome to TRIPSITR. Tap the button below to verify
+                  <strong style="color: #d4d4d8;">{{ .Email }}</strong> and start
+                  staging trips.
+                </p>
+
+                <!-- CTA -->
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 8px 0 24px 0;">
+                  <tr>
+                    <td
+                      style="
+                        background-color: #fafafa;
+                        border-radius: 2px;
+                      "
+                    >
+                      <a
+                        href="{{ .ConfirmationURL }}"
+                        style="
+                          display: inline-block;
+                          padding: 12px 22px;
+                          font-size: 13px;
+                          font-weight: 600;
+                          color: #09090b;
+                          text-decoration: none;
+                          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                          letter-spacing: 0.01em;
+                        "
+                      >
+                        Activate account →
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p
+                  style="
+                    margin: 0 0 6px 0;
+                    font-size: 11px;
+                    color: #71717a;
+                    line-height: 1.5;
+                  "
+                >
+                  Or paste this link into your browser:
+                </p>
+                <p
+                  style="
+                    margin: 0 0 24px 0;
+                    font-size: 11px;
+                    line-height: 1.5;
+                    color: #58a6ff;
+                    word-break: break-all;
+                    font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+                  "
+                >
+                  <a href="{{ .ConfirmationURL }}" style="color: #58a6ff; text-decoration: none;">
+                    {{ .ConfirmationURL }}
+                  </a>
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td
+                style="
+                  padding: 16px 32px 24px 32px;
+                  border-top: 1px solid #2a2a30;
+                  font-size: 11px;
+                  color: #71717a;
+                  line-height: 1.55;
+                "
+              >
+                <p style="margin: 0 0 6px 0;">
+                  This link expires in 24 hours.
+                </p>
+                <p style="margin: 0;">
+                  Didn't sign up? You can safely ignore this email — no account
+                  will be created.
+                </p>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Outer footer -->
+          <p
+            style="
+              margin: 16px 0 0 0;
+              font-size: 10px;
+              color: #71717a;
+              text-transform: uppercase;
+              letter-spacing: 0.22em;
+              font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+            "
+          >
+            TRIPSITR · Trip Simulation Dashboard
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
