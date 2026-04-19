@@ -27,7 +27,7 @@ export default function KeyboardHandler() {
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setSpeed(Math.min(500, playbackSpeed + (playbackSpeed < 10 ? 1 : playbackSpeed < 50 ? 5 : playbackSpeed < 200 ? 10 : 25)));
+          setSpeed(Math.min(1000, playbackSpeed + (playbackSpeed < 10 ? 1 : playbackSpeed < 50 ? 5 : playbackSpeed < 200 ? 10 : 25)));
           break;
         case 'ArrowDown':
           e.preventDefault();

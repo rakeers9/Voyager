@@ -21,7 +21,7 @@ import ShareTripModal from '../ShareTripModal';
 import EditableText from '../inline/EditableText';
 
 const MIN_SPEED = 1;
-const MAX_SPEED = 500;
+const MAX_SPEED = 1000;
 
 export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}) {
   const router = useRouter();
@@ -527,7 +527,7 @@ function SpeedDial({ speed, setSpeed }: { speed: number; setSpeed: (s: number) =
     <div
       onWheel={handleWheel}
       className="flex items-center gap-1.5 shrink-0 px-2 py-1 rounded-sm border border-white/[0.03] bg-elevated/30 cursor-ns-resize select-none"
-      title="Scroll or click to adjust speed (1x–500x)"
+      title="Scroll or click to adjust speed (1x to 1000x)"
     >
       <span className="text-[10px] text-dim uppercase tracking-widest">Speed</span>
       {editing ? (

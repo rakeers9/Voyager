@@ -50,7 +50,7 @@ const usePlaybackStore = create<InternalPlaybackState>((set, get) => {
 
   return {
     isPlaying: false,
-    playbackSpeed: 1,
+    playbackSpeed: 500,
     cursorTime: tripStartTime,
     tripStartTime,
     tripEndTime,
@@ -72,7 +72,7 @@ const usePlaybackStore = create<InternalPlaybackState>((set, get) => {
 
       set({
         isPlaying: false,
-        playbackSpeed: 1,
+        playbackSpeed: 500,
         cursorTime: start,
         tripStartTime: start,
         tripEndTime: end,
