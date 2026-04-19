@@ -103,6 +103,16 @@ function estimateDriveDuration(distanceMeters: number): number {
   return Math.max(5, Math.round(distanceMeters / avgSpeedMps / 60));
 }
 
+/** Validate "HH:MM" 24-hour string from the model; fall back to 08:00. */
+function normalizeStartTime(raw: string | undefined): string {
+  if (!raw) return '08:00';
+  const m = /^(\d{1,2}):(\d{2})$/.exec(raw.trim());
+  if (!m) return '08:00';
+  const hh = Math.max(0, Math.min(23, parseInt(m[1], 10)));
+  const mm = Math.max(0, Math.min(59, parseInt(m[2], 10)));
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
 /**
  * A stop as produced by the LLM chatbot.
  */
@@ -123,6 +133,11 @@ export interface TripPlanData {
   start_date: string;
   end_date: string;
   timezone: string;
+  /**
+   * Local clock time the trip begins on day 1, "HH:MM" 24-hour.
+   * Defaults to "08:00" when missing (older plans built before this field).
+   */
+  start_time_local?: string;
   stops: PlannedStop[];
 }
 
@@ -176,7 +191,8 @@ export async function buildTripFromGeocodedStops(
   const tripId = typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const tripStartMs = fromZonedTime(`${plan.start_date}T08:00:00`, plan.timezone).getTime();
+  const startTime = normalizeStartTime(plan.start_time_local);
+  const tripStartMs = fromZonedTime(`${plan.start_date}T${startTime}:00`, plan.timezone).getTime();
 
   // Pre-compute routed legs in parallel, batched to be polite to the API.
   type Leg = { from: [number, number]; to: [number, number]; profile: 'driving' | 'walking' };

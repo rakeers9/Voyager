@@ -302,6 +302,10 @@ function PlanCard({
         <div className="flex items-center gap-2 mt-1.5 text-[10px] font-mono text-dim flex-wrap">
           <span>{plan.start_date} to {plan.end_date}</span>
           <span>·</span>
+          <span className="flex items-center gap-0.5">
+            <Clock size={9} />Starts {formatStartTime(plan.start_time_local)}
+          </span>
+          <span>·</span>
           <span className="flex items-center gap-0.5"><MapPin size={9} />{totalStops} stops</span>
           <span>·</span>
           <span className="flex items-center gap-0.5"><Clock size={9} />{formatTotal(totalMinutes)}</span>
@@ -316,7 +320,7 @@ function PlanCard({
               Day {di + 1}
             </div>
             <div className="px-3 py-2 space-y-2">
-              {day.map((stop, si) => {
+              {day.stops.map((stop, si) => {
                 const seg = { type: 'stop' as const, category: stop.category } as Parameters<typeof getSegmentColor>[0];
                 const color = getSegmentColor(seg);
                 const showTransit = si > 0 && !!stop.transit_duration_estimate;
@@ -339,6 +343,9 @@ function PlanCard({
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 flex-wrap">
+                          <span className="text-[10px] font-mono text-muted shrink-0">
+                            {day.startTimes[si]}
+                          </span>
                           <span className="text-[12.5px] text-primary font-medium leading-snug">
                             {stop.name}
                           </span>
@@ -404,19 +411,42 @@ function PlanCard({
   );
 }
 
-/** Group stops into days using cumulative time from 8 AM start. */
-function groupStopsByDay(plan: TripPlanData): TripPlanData['stops'][] {
-  const days: TripPlanData['stops'][] = [[]];
-  let minutesElapsed = 8 * 60; // start at 8 AM minute-of-day
+/** Group stops into days using cumulative time from the plan's start time. */
+function groupStopsByDay(plan: TripPlanData): { stops: TripPlanData['stops']; startTimes: string[] }[] {
+  const startMin = parseStartTimeToMinutes(plan.start_time_local);
+  const days: { stops: TripPlanData['stops']; startTimes: string[] }[] = [{ stops: [], startTimes: [] }];
+  let elapsed = startMin;
   for (const stop of plan.stops) {
-    minutesElapsed += stop.transit_duration_estimate ?? 0;
-    const startMin = minutesElapsed;
-    minutesElapsed += stop.duration_minutes;
-    const dayIdx = Math.floor(startMin / (24 * 60));
-    while (days.length <= dayIdx) days.push([]);
-    days[dayIdx].push(stop);
+    elapsed += stop.transit_duration_estimate ?? 0;
+    const stopStart = elapsed;
+    elapsed += stop.duration_minutes;
+    const dayIdx = Math.floor(stopStart / (24 * 60));
+    while (days.length <= dayIdx) days.push({ stops: [], startTimes: [] });
+    days[dayIdx].stops.push(stop);
+    days[dayIdx].startTimes.push(minuteOfDayToHHMM(stopStart % (24 * 60)));
   }
-  return days.filter((d) => d.length > 0);
+  return days.filter((d) => d.stops.length > 0);
+}
+
+function parseStartTimeToMinutes(raw: string | undefined): number {
+  if (!raw) return 8 * 60;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(raw.trim());
+  if (!m) return 8 * 60;
+  const hh = Math.max(0, Math.min(23, parseInt(m[1], 10)));
+  const mm = Math.max(0, Math.min(59, parseInt(m[2], 10)));
+  return hh * 60 + mm;
+}
+
+function minuteOfDayToHHMM(min: number): string {
+  const h = Math.floor(min / 60) % 24;
+  const m = min % 60;
+  const hour12 = ((h + 11) % 12) + 1;
+  const ampm = h < 12 ? 'AM' : 'PM';
+  return `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+function formatStartTime(raw: string | undefined): string {
+  return minuteOfDayToHHMM(parseStartTimeToMinutes(raw));
 }
 
 function formatTotal(minutes: number): string {

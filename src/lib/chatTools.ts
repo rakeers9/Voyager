@@ -32,6 +32,17 @@ When you have enough information to propose a complete trip plan, call the propo
 - Group logically by day with overnight stays separating days
 - Categories: meal, accommodation, activity, sightseeing, transit_hub, errand, rest
 
+START TIME — REQUIRED, and MUST be honored strictly:
+- ALWAYS include the top-level "start_time_local" field on every propose_trip_plan call. Format: 24-hour "HH:MM" (e.g. "06:00", "08:30", "14:15").
+- If the user said anything about when they leave, depart, start, or wake up (e.g. "leaving at 6am", "we want to start by 7", "after breakfast around 9"), set start_time_local to that exact time. Do NOT default to 08:00.
+- Convert AM/PM to 24-hour: "6am" → "06:00", "1:30pm" → "13:30", "noon" → "12:00", "midnight" → "00:00".
+- If the user specified no start time, default to "08:00" — but only as a last resort. If the trip context strongly implies a time (red-eye drive, early hike, late-night arrival), pick a sensible time and mention it in your reply so the user can override.
+- When editing an existing trip, preserve the previous start_time_local unless the user explicitly asked to shift it.
+
+PER-STOP TIMING:
+- Stop start times are derived from start_time_local + cumulative duration + transit_duration_estimate. Make sure the durations and transit estimates you provide produce a realistic-looking schedule (e.g. lunch around midday, dinner in the evening, sleep at night).
+- If a specific stop has a fixed real-world time the user mentioned ("dinner reservation at 7"), order the stops and pick durations so the cumulative time lands at that hour. Mention any tight constraints in your reply.
+
 PLAN SIZE LIMIT — keep each propose_trip_plan call to AT MOST 30 stops:
 - A "stop" is any entry in the stops[] array (including start/end locations, meals, accommodations, etc.).
 - If the requested itinerary would need more than 30 stops (e.g. a 10-day cross-country road trip with every meal and sight), do NOT cram everything into one plan. Instead:
@@ -65,6 +76,11 @@ export function formatTripSnapshot(snapshot: CurrentTripSnapshot): string {
   if (snapshot.description) lines.push(`Description: ${snapshot.description}`);
   lines.push(`Dates: ${snapshot.start_date} to ${snapshot.end_date}`);
   lines.push(`Timezone: ${snapshot.timezone}`);
+  if (snapshot.stops[0]?.start_time) {
+    // Surface the day-1 start time so the model preserves it on edits.
+    const t = snapshot.stops[0].start_time.split(' ')[1] ?? '';
+    if (t) lines.push(`Start time (local): ${t}  ← preserve unless user explicitly changes it`);
+  }
   lines.push('');
   lines.push('Stops (in order):');
   snapshot.stops.forEach((s, i) => {
@@ -94,6 +110,11 @@ export const TRIP_PLAN_FUNCTION_DECLARATION = {
       start_date: { type: 'STRING', description: 'Start date in YYYY-MM-DD format' },
       end_date: { type: 'STRING', description: 'End date in YYYY-MM-DD format' },
       timezone: { type: 'STRING', description: 'IANA timezone for the trip (e.g., America/Los_Angeles)' },
+      start_time_local: {
+        type: 'STRING',
+        description:
+          'REQUIRED. Local clock time when the trip begins on day 1, formatted as 24-hour "HH:MM" (e.g. "06:00", "08:30"). Honor any time the user mentioned (e.g. "leave at 6am" → "06:00"). Default "08:00" only when no preference was given.',
+      },
       stops: {
         type: 'ARRAY',
         description: 'Ordered list of stops. Transit segments between stops are generated automatically.',
@@ -125,6 +146,6 @@ export const TRIP_PLAN_FUNCTION_DECLARATION = {
         },
       },
     },
-    required: ['title', 'description', 'start_date', 'end_date', 'timezone', 'stops'],
+    required: ['title', 'description', 'start_date', 'end_date', 'timezone', 'start_time_local', 'stops'],
   },
 };
