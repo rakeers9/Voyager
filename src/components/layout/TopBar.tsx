@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import {
   ChevronDown, LogOut, Map, Compass, Plus,
   Play, Pause, SkipBack, SkipForward, ListOrdered, Trash2,
-  MoreVertical, Share2,
+  MoreVertical, Share2, Menu,
 } from 'lucide-react';
 import useTripStore from '@/stores/tripStore';
 import usePlaybackStore from '@/stores/playbackStore';
 import useTripsListStore from '@/stores/tripsListStore';
+import useViewStore from '@/stores/viewStore';
 import { getSegmentColor } from '@/lib/colors';
 import { formatTime, formatDate, getDayStartMs } from '@/lib/time';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,6 +37,7 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
   const loadFromSupabase = useTripsListStore((s) => s.loadFromSupabase);
 
   const { user, signOut } = useAuth();
+  const toggleMobilePanel = useViewStore((s) => s.toggleMobilePanel);
 
   // Load saved trips from Supabase on mount (once).
   // Skip in read-only (shared) mode — viewer doesn't need a trip list.
@@ -144,7 +146,19 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
   );
 
   return (
-    <div className="flex items-center gap-3 px-4 h-11 border-b border-white/[0.04] bg-base shrink-0">
+    <div className="flex items-center gap-2 md:gap-3 px-2 md:px-4 h-11 border-b border-white/[0.04] bg-base shrink-0">
+      {/* Mobile-only: open Intel panel drawer */}
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={toggleMobilePanel}
+          aria-label="Open trip panel"
+          className="md:hidden flex items-center justify-center w-8 h-8 rounded-sm text-dim hover:text-heading hover:bg-white/[0.06] transition-colors shrink-0"
+        >
+          <Menu size={16} />
+        </button>
+      )}
+
       {/* Logo dropdown (interactive only when not read-only) */}
       <div ref={menuRef} className="relative shrink-0">
         <button
@@ -157,7 +171,7 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
           <div className="w-5 h-5 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
             <Compass size={12} className="text-info" />
           </div>
-          <span className="text-heading font-semibold text-[13px] tracking-wide">VOYAGER</span>
+          <span className="hidden sm:inline text-heading font-semibold text-[13px] tracking-wide">VOYAGER</span>
           {!readOnly && (
             <ChevronDown size={11} className={`text-dim transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
           )}
@@ -275,7 +289,7 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
 
       {/* Trip title + menu */}
       {trip && !readOnly ? (
-        <h1 className="text-heading font-semibold text-[13px] tracking-wide uppercase shrink-0 max-w-[40ch] truncate">
+        <h1 className="text-heading font-semibold text-[13px] tracking-wide uppercase shrink-0 max-w-[16ch] sm:max-w-[40ch] truncate">
           <EditableText
             value={trip.title}
             onSave={(next) => renameTrip(trip.id, next)}
@@ -285,7 +299,7 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
           />
         </h1>
       ) : (
-        <h1 className="text-heading font-semibold text-[13px] tracking-wide uppercase shrink-0 truncate max-w-[40ch]">
+        <h1 className="text-heading font-semibold text-[13px] tracking-wide uppercase shrink-0 truncate max-w-[16ch] sm:max-w-[40ch]">
           {trip?.title ?? 'Untitled Trip'}
         </h1>
       )}
@@ -383,10 +397,10 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
         </ControlButton>
       </div>
 
-      {/* Scrubber — fills remaining space */}
+      {/* Scrubber — fills remaining space (desktop only; too narrow on phones) */}
       <div
         ref={scrubberRef}
-        className="relative flex-1 h-4 flex rounded-sm overflow-hidden cursor-pointer border border-white/[0.03]"
+        className="hidden md:flex relative flex-1 h-4 rounded-sm overflow-hidden cursor-pointer border border-white/[0.03]"
         onClick={handleScrubberClick}
       >
         {segments.map((seg, i) => {
@@ -442,13 +456,18 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
         />
       </div>
 
-      {/* Speed selector — scroll to adjust */}
-      <SpeedDial speed={playbackSpeed} setSpeed={setSpeed} />
+      {/* Spacer to push the right-side controls when scrubber is hidden on mobile */}
+      <div className="md:hidden flex-1" />
 
-      {/* Timestamp */}
+      {/* Speed selector — scroll to adjust (desktop only) */}
+      <div className="hidden md:flex">
+        <SpeedDial speed={playbackSpeed} setSpeed={setSpeed} />
+      </div>
+
+      {/* Timestamp — full on desktop, time-only on mobile */}
       <div className="text-right shrink-0">
-        <p className="text-[12px] font-mono text-heading leading-none">{formatTime(cursorTime, tz)}</p>
-        <p className="text-[9px] font-mono text-dim mt-0.5">{formatDate(cursorTime, tz)}</p>
+        <p className="text-[11px] md:text-[12px] font-mono text-heading leading-none">{formatTime(cursorTime, tz)}</p>
+        <p className="hidden md:block text-[9px] font-mono text-dim mt-0.5">{formatDate(cursorTime, tz)}</p>
       </div>
 
       {/* Itinerary modal */}

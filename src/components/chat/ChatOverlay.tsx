@@ -33,8 +33,18 @@ function loadRect(): Rect | null {
 export default function ChatOverlay({ defaultOpen = false }: { defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   const [rect, setRect] = useState<Rect | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const parentSizeRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
+
+  // Track viewport — on mobile we render as a fullscreen sheet rather than
+  // a floating draggable window (the min size would dwarf a phone screen).
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth < 768);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   // Sync chat history to the currently active trip so the bot can edit it.
   const activeTripId = useTripsListStore((s) => s.activeTripId);
@@ -162,21 +172,27 @@ export default function ChatOverlay({ defaultOpen = false }: { defaultOpen?: boo
     );
   }
 
-  // Reserve a mount point even before rect is measured (so the parent ref resolves)
-  const style: React.CSSProperties = rect
-    ? { left: rect.x, top: rect.y, width: rect.w, height: rect.h }
-    : { visibility: 'hidden', left: 0, top: 0, width: DEFAULT_W, height: DEFAULT_H };
+  // On mobile: fullscreen sheet anchored to parent. On desktop: floating draggable.
+  const style: React.CSSProperties = isMobile
+    ? { left: 0, top: 0, right: 0, bottom: 0, width: 'auto', height: 'auto' }
+    : rect
+      ? { left: rect.x, top: rect.y, width: rect.w, height: rect.h }
+      : { visibility: 'hidden', left: 0, top: 0, width: DEFAULT_W, height: DEFAULT_H };
 
   return (
     <div
       ref={wrapperRef}
-      className="absolute z-20 border border-white/[0.08] rounded-md bg-[#09090B]/92 backdrop-blur-xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden select-none"
+      className={`absolute z-30 border border-white/[0.08] bg-[#09090B]/92 backdrop-blur-xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden select-none ${
+        isMobile ? '' : 'rounded-md'
+      }`}
       style={style}
     >
-      {/* Header — drag handle */}
+      {/* Header — drag handle (drag disabled on mobile) */}
       <div
-        onPointerDown={(e) => startInteraction(e, 'move')}
-        className="shrink-0 flex items-center gap-2 px-3 h-9 border-b border-white/[0.06] bg-white/[0.02] cursor-grab active:cursor-grabbing"
+        onPointerDown={(e) => { if (!isMobile) startInteraction(e, 'move'); }}
+        className={`shrink-0 flex items-center gap-2 px-3 h-9 border-b border-white/[0.06] bg-white/[0.02] ${
+          isMobile ? '' : 'cursor-grab active:cursor-grabbing'
+        }`}
       >
         <div className="w-5 h-5 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
           <Compass size={11} className="text-info" />
@@ -184,7 +200,7 @@ export default function ChatOverlay({ defaultOpen = false }: { defaultOpen?: boo
         <span className="text-[12px] font-semibold tracking-[0.14em] text-heading uppercase">
           Voyager
         </span>
-        <GripHorizontal size={12} className="text-dim ml-1" />
+        {!isMobile && <GripHorizontal size={12} className="text-dim ml-1" />}
         <div className="flex-1" />
         <button
           type="button"
@@ -202,8 +218,8 @@ export default function ChatOverlay({ defaultOpen = false }: { defaultOpen?: boo
         <ChatPanel />
       </div>
 
-      {/* Resize handles */}
-      <ResizeEdges onStart={startInteraction} />
+      {/* Resize handles — desktop only */}
+      {!isMobile && <ResizeEdges onStart={startInteraction} />}
     </div>
   );
 }
