@@ -1,5 +1,5 @@
 -- ============================================
--- VOYAGER Database Schema
+-- Trip Sitter Database Schema
 -- Run this in Supabase SQL Editor
 -- ============================================
 

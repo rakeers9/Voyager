@@ -1,6 +1,8 @@
-# Family Trip Command Center
+# Trip Sitter
 
-> A Palantir-ish dashboard for a very non-Palantir problem: getting a few families to Pine Mountain Lake and Yosemite without losing the plot.
+> A Palantir-ish dashboard for a very non-Palantir problem: planning, visualizing, and playing back family trips like a mission-control operation.
+
+> **Note:** the section below describes an earlier Vite-based version of the app. The current codebase is Next.js 15 + Supabase + Mapbox; see `DEPLOY.md` for the up-to-date stack and deploy steps.
 
 Instead of a normal trip planner, this repo treats a long weekend like an operation: convoy routes, arrival windows, mission launches, meal logistics, family checklists, and a giant map that makes everything feel more serious than it needs to be.
 

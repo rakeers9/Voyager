@@ -1,8 +1,8 @@
 {
-  "name": "palantir-for-family-trips",
+  "name": "trip-sitter",
   "version": "1.0.0",
   "type": "module",
-  "description": "A Palantir-style family trip command center for a Yosemite weekend.",
+  "description": "Trip Sitter — a trip simulation dashboard. Plan, visualize, and play back family trips on a Palantir-style mission control surface.",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",

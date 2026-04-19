@@ -6,7 +6,7 @@ import ChatPanel from './ChatPanel';
 import useChatStore from '@/stores/chatStore';
 import useTripsListStore from '@/stores/tripsListStore';
 
-const STORAGE_KEY = 'voyager.chat.rect';
+const STORAGE_KEY = 'tripsitter.chat.rect';
 const MIN_W = 320;
 const MIN_H = 360;
 const DEFAULT_W = 400;
@@ -198,7 +198,7 @@ export default function ChatOverlay({ defaultOpen = false }: { defaultOpen?: boo
           <Compass size={11} className="text-info" />
         </div>
         <span className="text-[12px] font-semibold tracking-[0.14em] text-heading uppercase">
-          Voyager
+          Trip Sitter
         </span>
         {!isMobile && <GripHorizontal size={12} className="text-dim ml-1" />}
         <div className="flex-1" />

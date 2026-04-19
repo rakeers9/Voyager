@@ -15,8 +15,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'VOYAGER — Trip Simulation Dashboard',
-  description: 'A trip simulation engine with Palantir-style mission control dashboard.',
+  title: 'Trip Sitter — Trip Simulation Dashboard',
+  description: 'Plan, visualize, and play back family trips on a Palantir-style mission control dashboard.',
 };
 
 export const viewport = {

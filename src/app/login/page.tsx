@@ -191,7 +191,7 @@ function LoginInner() {
               <Compass size={18} className="text-heading" />
             </div>
             <span className="font-bold text-[15px] tracking-[0.18em] text-heading">
-              VOYAGER
+              TRIP SITTER
             </span>
           </div>
           <div className="mt-2 text-[10px] uppercase tracking-[0.22em] text-dim font-mono">
@@ -241,7 +241,7 @@ function LoginInner() {
               <Compass size={16} className="text-heading" />
             </div>
             <span className="font-bold text-[14px] tracking-[0.18em] text-heading">
-              VOYAGER
+              TRIP SITTER
             </span>
           </div>
 

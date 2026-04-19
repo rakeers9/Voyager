@@ -47,7 +47,7 @@ export default function EmptyDashboard() {
             <div className="w-5 h-5 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
               <Compass size={12} className="text-info" />
             </div>
-            <span className="text-heading font-semibold text-[13px] tracking-wide">VOYAGER</span>
+            <span className="text-heading font-semibold text-[13px] tracking-wide">TRIP SITTER</span>
             <ChevronDown size={11} className={`text-dim transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
           </button>
 
@@ -80,7 +80,7 @@ export default function EmptyDashboard() {
           </div>
           <h1 className="text-heading text-xl font-semibold mb-2">No trips yet</h1>
           <p className="text-[13px] text-dim leading-relaxed mb-6">
-            Plan your first trip with the Voyager chatbot. Describe where you want to go, and it'll generate a full itinerary you can play back on the map.
+            Plan your first trip with the Trip Sitter chatbot. Describe where you want to go, and it'll generate a full itinerary you can play back on the map.
           </p>
           <button
             onClick={handleCreateTrip}

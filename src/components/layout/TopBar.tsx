@@ -171,7 +171,7 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
           <div className="w-5 h-5 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
             <Compass size={12} className="text-info" />
           </div>
-          <span className="hidden sm:inline text-heading font-semibold text-[13px] tracking-wide">VOYAGER</span>
+          <span className="hidden sm:inline text-heading font-semibold text-[13px] tracking-wide">TRIP SITTER</span>
           {!readOnly && (
             <ChevronDown size={11} className={`text-dim transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
           )}

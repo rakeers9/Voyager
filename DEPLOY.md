@@ -1,6 +1,6 @@
 # Vercel Deploy Notes
 
-Things to keep in mind when deploying VOYAGER to Vercel and after.
+Things to keep in mind when deploying Trip Sitter to Vercel and after.
 
 ---
 

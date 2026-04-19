@@ -119,7 +119,7 @@ export default function ResetPasswordPage() {
           <div className="w-8 h-8 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
             <Compass size={16} className="text-heading" />
           </div>
-          <span className="font-bold text-[14px] tracking-[0.18em] text-heading">VOYAGER</span>
+          <span className="font-bold text-[14px] tracking-[0.18em] text-heading">TRIP SITTER</span>
         </div>
 
         <div className="mb-6">
