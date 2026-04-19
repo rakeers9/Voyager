@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { LogoMark } from '@/components/Brand';
+import GlobeCanvas from '@/components/auth/GlobeCanvas';
 
 type Mode = 'signin' | 'signup';
 type FieldErrors = Partial<Record<'name' | 'email' | 'password' | 'confirm', string>>;
@@ -169,9 +170,24 @@ function LoginInner() {
   };
 
   return (
-    <div className="flex min-h-screen w-screen bg-base text-primary overflow-y-auto">
-      {/* LEFT — Brand panel */}
-      <aside className="relative hidden lg:flex flex-col justify-between w-[44%] xl:w-[40%] border-r border-edge/60 bg-surface/40 overflow-hidden">
+    <div className="relative flex min-h-screen w-screen bg-base text-primary overflow-y-auto">
+      {/* Full-page animated globe — Palantir Gotham-style data sphere.
+          Fixed so it stays anchored to the viewport if the form scrolls. */}
+      <GlobeCanvas className="fixed inset-0 w-screen h-screen pointer-events-none z-0" />
+
+      {/* Global legibility mask — dims the far-left (aside text) and adds a
+          soft vignette behind the form column without hiding the globe. */}
+      <div
+        aria-hidden
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          background:
+            'linear-gradient(90deg, rgba(9,9,11,0.82) 0%, rgba(9,9,11,0.55) 32%, rgba(9,9,11,0.15) 55%, rgba(9,9,11,0.35) 100%)',
+        }}
+      />
+
+      {/* LEFT — Brand panel (transparent now so globe shows through) */}
+      <aside className="relative hidden lg:flex flex-col justify-between w-[44%] xl:w-[40%] overflow-hidden z-10">
         {/* grid backdrop */}
         <div
           className="absolute inset-0 opacity-[0.35] pointer-events-none"
@@ -183,9 +199,9 @@ function LoginInner() {
               'radial-gradient(ellipse at top left, rgba(0,0,0,0.9), transparent 70%)',
           }}
         />
-        {/* accent glow */}
+
+        {/* Soft top-left accent glow kept for depth */}
         <div className="absolute -top-32 -left-32 w-[420px] h-[420px] rounded-full blur-3xl opacity-20 pointer-events-none bg-accent" />
-        <div className="absolute bottom-0 right-0 w-[360px] h-[360px] rounded-full blur-3xl opacity-[0.08] pointer-events-none bg-drive" />
 
         <div className="relative z-10 p-10 xl:p-14">
           <div className="flex items-center gap-2.5">
@@ -241,8 +257,17 @@ function LoginInner() {
       </aside>
 
       {/* RIGHT — Form */}
-      <main className="flex-1 flex items-center justify-center px-6 py-10">
-        <div className="w-full max-w-[400px]">
+      <main className="relative flex-1 flex items-center justify-center px-6 py-10 z-10">
+        {/* Radial vignette behind the form so inputs stay readable over the globe */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse 460px 560px at center, rgba(9,9,11,0.82) 0%, rgba(9,9,11,0.55) 45%, rgba(9,9,11,0) 85%)',
+          }}
+        />
+        <div className="relative z-10 w-full max-w-[400px] mt-12 lg:mt-16">
           {/* Mobile brand */}
           <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
             <LogoMark size={28} className="text-heading shrink-0" />
