@@ -88,8 +88,10 @@ export default function DashboardShell({ readOnly = false }: { readOnly?: boolea
       <TopBar readOnly={readOnly} />
 
       <div className="relative flex-1 min-h-0">
-        {/* Map — fills entire area */}
-        <div className="absolute inset-0">
+        {/* Map — fills entire area. `z-0` creates a stacking context so
+            Mapbox DOM markers (e.g. the playhead arrow with its own
+            z-index) can't escape above the sidebar/bottom bar. */}
+        <div className="absolute inset-0 z-0">
           <MapViewport sidebarWidth={mapSidebarWidth} />
         </div>
 
