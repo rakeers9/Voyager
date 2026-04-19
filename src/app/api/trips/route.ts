@@ -57,6 +57,10 @@ export async function POST(request: NextRequest) {
   await supabase.from('segments').delete().eq('trip_id', savedTrip.id);
 
   const segmentRows = segments.map((seg: Record<string, unknown>) => ({
+    // Forward client-generated UUID so the client and DB agree on segment
+    // identity — required for later PATCH /api/segments/:id calls (notes,
+    // rename, description edits) to find the row.
+    ...(typeof seg.id === 'string' && seg.id.length >= 32 ? { id: seg.id } : {}),
     trip_id: savedTrip.id,
     sequence_order: seg.sequence_order,
     type: seg.type,

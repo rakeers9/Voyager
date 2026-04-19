@@ -6,6 +6,7 @@ import { GripVertical, X } from 'lucide-react';
 import TopBar from './TopBar';
 import IntelPanel from '../intel/IntelPanel';
 import UpNextBar from '../timeline/UpNextBar';
+import MobilePlayerBar from './MobilePlayerBar';
 import KeyboardHandler from '../KeyboardHandler';
 import ChatOverlay from '../chat/ChatOverlay';
 import useViewStore from '@/stores/viewStore';
@@ -144,6 +145,11 @@ export default function DashboardShell({ readOnly = false }: { readOnly?: boolea
           style={{ left: desktopWidth }}
         >
           <UpNextBar />
+        </div>
+
+        {/* Mobile player bar — replaces desktop scrubber/transport at the bottom. */}
+        <div className="md:hidden absolute bottom-0 left-0 right-0 z-10">
+          <MobilePlayerBar />
         </div>
 
         {/* Chat overlay — hidden in read-only (shared) view */}

@@ -4,6 +4,15 @@ import { createClient } from '@supabase/supabase-js';
 // Public (no-auth) trip read endpoint used by /share/[tripId].
 // Uses the service-role key to bypass RLS so anyone with the trip UUID can view.
 // Only returns trips with status='active' — drafts and archived trips are not shareable.
+
+// Always hit the DB — share links must reflect the latest notes, edits,
+// renames, and chat-driven rebuilds from the owner.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
+const NO_CACHE = { 'Cache-Control': 'no-store, max-age=0' };
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ tripId: string }> }
@@ -13,7 +22,7 @@ export async function GET(
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) {
-    return Response.json({ error: 'Server misconfigured' }, { status: 500 });
+    return Response.json({ error: 'Server misconfigured' }, { status: 500, headers: NO_CACHE });
   }
 
   const supabase = createClient(url, serviceKey, {
@@ -27,11 +36,11 @@ export async function GET(
     .single();
 
   if (tripError || !trip) {
-    return Response.json({ error: 'Trip not found' }, { status: 404 });
+    return Response.json({ error: 'Trip not found' }, { status: 404, headers: NO_CACHE });
   }
 
   if (trip.status !== 'active') {
-    return Response.json({ error: 'Trip not available' }, { status: 404 });
+    return Response.json({ error: 'Trip not available' }, { status: 404, headers: NO_CACHE });
   }
 
   const { data: segments, error: segError } = await supabase
@@ -41,7 +50,7 @@ export async function GET(
     .order('sequence_order');
 
   if (segError) {
-    return Response.json({ error: segError.message }, { status: 500 });
+    return Response.json({ error: segError.message }, { status: 500, headers: NO_CACHE });
   }
 
   const formattedSegments = (segments || []).map((row) => {
@@ -74,5 +83,5 @@ export async function GET(
     };
   });
 
-  return Response.json({ trip, segments: formattedSegments });
+  return Response.json({ trip, segments: formattedSegments }, { headers: NO_CACHE });
 }

@@ -152,10 +152,10 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
         <button
           type="button"
           onClick={toggleMobilePanel}
-          aria-label="Open trip panel"
-          className="md:hidden flex items-center justify-center w-8 h-8 rounded-sm text-dim hover:text-heading hover:bg-white/[0.06] transition-colors shrink-0"
+          aria-label="Open trip details"
+          className="md:hidden flex items-center justify-center w-9 h-9 rounded-sm bg-white/[0.04] border border-white/[0.06] text-heading active:bg-white/[0.08] transition-colors shrink-0"
         >
-          <Menu size={16} />
+          <Menu size={17} />
         </button>
       )}
 
@@ -378,8 +378,8 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
 
       <div className="w-px h-4 bg-white/[0.03] shrink-0" />
 
-      {/* Transport controls */}
-      <div className="flex items-center gap-0.5 shrink-0">
+      {/* Transport controls — desktop only; mobile has a bottom player bar */}
+      <div className="hidden md:flex items-center gap-0.5 shrink-0">
         <ControlButton onClick={stepBackward} title="Previous segment">
           <SkipBack size={13} />
         </ControlButton>
@@ -464,10 +464,10 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
         <SpeedDial speed={playbackSpeed} setSpeed={setSpeed} />
       </div>
 
-      {/* Timestamp — full on desktop, time-only on mobile */}
-      <div className="text-right shrink-0">
-        <p className="text-[11px] md:text-[12px] font-mono text-heading leading-none">{formatTime(cursorTime, tz)}</p>
-        <p className="hidden md:block text-[9px] font-mono text-dim mt-0.5">{formatDate(cursorTime, tz)}</p>
+      {/* Timestamp — desktop only; mobile surfaces the time in the bottom player bar */}
+      <div className="hidden md:block text-right shrink-0">
+        <p className="text-[12px] font-mono text-heading leading-none">{formatTime(cursorTime, tz)}</p>
+        <p className="text-[9px] font-mono text-dim mt-0.5">{formatDate(cursorTime, tz)}</p>
       </div>
 
       {/* Itinerary modal */}

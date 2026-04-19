@@ -20,8 +20,15 @@ export function buildSegmentsFromDefs(
     const endTime = startTime + def.duration * MIN;
     currentTime = endTime;
 
+    // Real UUIDs so the client, DB, and PATCH endpoints all agree on segment
+    // identity after save. Falls back to a random string only on environments
+    // without crypto.randomUUID (should never happen in modern browsers/Node).
+    const segmentId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${i}-${Math.random().toString(16).slice(2)}`;
+
     const base = {
-      id: `seg-${String(i).padStart(2, '0')}`,
+      id: segmentId,
       trip_id: tripId,
       sequence_order: i,
       title: def.title,
