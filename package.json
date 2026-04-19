@@ -1,8 +1,8 @@
 {
-  "name": "trip-sitter",
+  "name": "tripsitr",
   "version": "1.0.0",
   "type": "module",
-  "description": "Trip Sitter — a trip simulation dashboard. Plan, visualize, and play back family trips on a Palantir-style mission control surface.",
+  "description": "TRIPSITR — a trip simulation dashboard. Plan, visualize, and play back family trips on a Palantir-style mission control surface.",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",

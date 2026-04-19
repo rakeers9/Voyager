@@ -1,4 +1,4 @@
-# Trip Sitter
+# TRIPSITR
 
 > A Palantir-ish dashboard for a very non-Palantir problem: planning, visualizing, and playing back family trips like a mission-control operation.
 

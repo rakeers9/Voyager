@@ -1,5 +1,5 @@
 -- ============================================
--- Trip Sitter Database Schema
+-- TRIPSITR Database Schema
 -- Run this in Supabase SQL Editor
 -- ============================================
 

@@ -6,13 +6,13 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
-  Compass,
   Eye,
   EyeOff,
   Loader2,
   Lock,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { LogoMark } from '@/components/Brand';
 
 function scorePassword(pw: string): { score: 0 | 1 | 2 | 3 | 4; label: string } {
   if (!pw) return { score: 0, label: '' };
@@ -116,10 +116,8 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-[100dvh] w-screen items-center justify-center bg-base text-primary px-6 py-10">
       <div className="w-full max-w-[400px]">
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-8 h-8 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
-            <Compass size={16} className="text-heading" />
-          </div>
-          <span className="font-bold text-[14px] tracking-[0.18em] text-heading">TRIP SITTER</span>
+          <LogoMark size={28} className="text-heading shrink-0" />
+          <span className="font-bold text-[14px] tracking-[0.18em] text-heading">TRIPSITR</span>
         </div>
 
         <div className="mb-6">

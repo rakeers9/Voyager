@@ -7,6 +7,7 @@ import {
   Play, Pause, SkipBack, SkipForward, ListOrdered, Trash2,
   MoreVertical, Share2, Menu,
 } from 'lucide-react';
+import { LogoMark } from '../Brand';
 import useTripStore from '@/stores/tripStore';
 import usePlaybackStore from '@/stores/playbackStore';
 import useTripsListStore from '@/stores/tripsListStore';
@@ -168,10 +169,8 @@ export default function TopBar({ readOnly = false }: { readOnly?: boolean } = {}
             readOnly ? 'cursor-default' : 'hover:bg-elevated/60'
           }`}
         >
-          <div className="w-5 h-5 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
-            <Compass size={12} className="text-info" />
-          </div>
-          <span className="hidden sm:inline text-heading font-semibold text-[13px] tracking-wide">TRIP SITTER</span>
+          <LogoMark size={18} className="text-heading shrink-0" />
+          <span className="hidden sm:inline text-heading font-semibold text-[13px] tracking-wide">TRIPSITR</span>
           {!readOnly && (
             <ChevronDown size={11} className={`text-dim transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
           )}

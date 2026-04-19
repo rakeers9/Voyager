@@ -18,6 +18,7 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { LogoMark } from '@/components/Brand';
 
 type Mode = 'signin' | 'signup';
 type FieldErrors = Partial<Record<'name' | 'email' | 'password' | 'confirm', string>>;
@@ -187,11 +188,9 @@ function LoginInner() {
 
         <div className="relative z-10 p-10 xl:p-14">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
-              <Compass size={18} className="text-heading" />
-            </div>
+            <LogoMark size={32} className="text-heading shrink-0" />
             <span className="font-bold text-[15px] tracking-[0.18em] text-heading">
-              TRIP SITTER
+              TRIPSITR
             </span>
           </div>
           <div className="mt-2 text-[10px] uppercase tracking-[0.22em] text-dim font-mono">
@@ -237,11 +236,9 @@ function LoginInner() {
         <div className="w-full max-w-[400px]">
           {/* Mobile brand */}
           <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
-            <div className="w-8 h-8 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
-              <Compass size={16} className="text-heading" />
-            </div>
+            <LogoMark size={28} className="text-heading shrink-0" />
             <span className="font-bold text-[14px] tracking-[0.18em] text-heading">
-              TRIP SITTER
+              TRIPSITR
             </span>
           </div>
 

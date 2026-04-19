@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Compass, MapPin, ChevronDown, LogOut, Map, Plus } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import ChatOverlay from '../chat/ChatOverlay';
+import { LogoMark } from '../Brand';
 import useChatStore from '@/stores/chatStore';
 import useTripsListStore from '@/stores/tripsListStore';
 import { createDraftTrip } from '@/lib/createDraftTrip';
@@ -67,7 +68,7 @@ export default function NewTripShell() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-base">
-      {/* Top bar — same TRIP SITTER dropdown as main dashboard */}
+      {/* Top bar — same TRIPSITR dropdown as main dashboard */}
       <div className="flex items-center gap-3 px-4 h-11 border-b border-white/[0.04] bg-base shrink-0">
         {/* Logo dropdown */}
         <div ref={menuRef} className="relative shrink-0">
@@ -75,10 +76,8 @@ export default function NewTripShell() {
             onClick={() => setMenuOpen(!menuOpen)}
             className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-elevated/60 transition-colors"
           >
-            <div className="w-5 h-5 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
-              <Compass size={12} className="text-info" />
-            </div>
-            <span className="text-heading font-semibold text-[13px] tracking-wide">TRIP SITTER</span>
+            <LogoMark size={18} className="text-heading shrink-0" />
+            <span className="text-heading font-semibold text-[13px] tracking-wide">TRIPSITR</span>
             <ChevronDown size={11} className={`text-dim transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
           </button>
 

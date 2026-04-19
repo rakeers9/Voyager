@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Compass, ChevronDown, LogOut, Plus, Sparkles, Loader2 } from 'lucide-react';
+import { ChevronDown, LogOut, Plus, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { createDraftTrip } from '@/lib/createDraftTrip';
 import useTripsListStore from '@/stores/tripsListStore';
+import { LogoMark } from '../Brand';
 
 export default function EmptyDashboard() {
   const router = useRouter();
@@ -44,10 +45,8 @@ export default function EmptyDashboard() {
             onClick={() => setMenuOpen(!menuOpen)}
             className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-elevated/60 transition-colors"
           >
-            <div className="w-5 h-5 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
-              <Compass size={12} className="text-info" />
-            </div>
-            <span className="text-heading font-semibold text-[13px] tracking-wide">TRIP SITTER</span>
+            <LogoMark size={18} className="text-heading shrink-0" />
+            <span className="text-heading font-semibold text-[13px] tracking-wide">TRIPSITR</span>
             <ChevronDown size={11} className={`text-dim transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
           </button>
 
@@ -80,7 +79,7 @@ export default function EmptyDashboard() {
           </div>
           <h1 className="text-heading text-xl font-semibold mb-2">No trips yet</h1>
           <p className="text-[13px] text-dim leading-relaxed mb-6">
-            Plan your first trip with the Trip Sitter chatbot. Describe where you want to go, and it'll generate a full itinerary you can play back on the map.
+            Plan your first trip with the Tripsitr chatbot. Describe where you want to go, and it'll generate a full itinerary you can play back on the map.
           </p>
           <button
             onClick={handleCreateTrip}

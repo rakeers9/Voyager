@@ -1,4 +1,4 @@
-# Trip Sitter — Trip Simulation Dashboard
+# TRIPSITR — Trip Simulation Dashboard
 ## Full Product & Engineering Plan
 
 > **What this document is:** A complete specification for building a production-grade trip visualization and planning platform. The product lets users build comprehensive travel plans, then experience them through an animated map simulation with a Palantir-style mission control dashboard. This document should be treated as the source of truth for all architectural decisions, data modeling, UI design, and build sequencing.
@@ -9,13 +9,13 @@
 
 ## 1. PRODUCT VISION
 
-### What Trip Sitter Is
+### What TRIPSITR Is
 
 A **trip simulation engine** disguised as a planning tool. Users build a travel plan (road trip, city trip, multi-day adventure), and the platform turns it into a playable, animated experience on a map — press play, watch yourself drive down the highway, arrive at a restaurant, walk through a city, check into a hotel. The entire trip plays out in real time (with speed controls) on a dark, high-information-density dashboard inspired by Palantir's operational UIs.
 
 ### What Makes It Different
 
-The hero feature is **playback**. Other trip planners give you a list. Trip Sitter gives you a simulation. You can scrub through your trip like a video, see exactly when you'll be where, pause at any point to inspect details, and edit on the fly. The map is the center of the experience, with contextual intelligence panels around it.
+The hero feature is **playback**. Other trip planners give you a list. TRIPSITR gives you a simulation. You can scrub through your trip like a video, see exactly when you'll be where, pause at any point to inspect details, and edit on the fly. The map is the center of the experience, with contextual intelligence panels around it.
 
 ### Core User Flow (MVP)
 

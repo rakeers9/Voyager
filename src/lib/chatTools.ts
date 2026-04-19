@@ -2,7 +2,7 @@
 // These are plain objects — no SDK imports, so they can be used in both
 // server (API route) and client (type reference) contexts.
 
-export const SYSTEM_PROMPT = `You are TRIP SITTER, a trip planning assistant for a road trip simulation dashboard. You help users design multi-day trip itineraries.
+export const SYSTEM_PROMPT = `You are TRIPSITR, a trip planning assistant for a road trip simulation dashboard. You help users design multi-day trip itineraries.
 
 When chatting with the user:
 - Ask clarifying questions about their destination, dates, number of days, interests, and preferences

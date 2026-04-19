@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { X, MessageCircle, Compass, GripHorizontal } from 'lucide-react';
+import { X, MessageCircle, GripHorizontal } from 'lucide-react';
 import ChatPanel from './ChatPanel';
+import { LogoMark } from '../Brand';
 import useChatStore from '@/stores/chatStore';
 import useTripsListStore from '@/stores/tripsListStore';
 
@@ -194,11 +195,9 @@ export default function ChatOverlay({ defaultOpen = false }: { defaultOpen?: boo
           isMobile ? '' : 'cursor-grab active:cursor-grabbing'
         }`}
       >
-        <div className="w-5 h-5 rounded-sm bg-info/10 border border-info/20 flex items-center justify-center">
-          <Compass size={11} className="text-info" />
-        </div>
+        <LogoMark size={16} className="text-heading shrink-0" />
         <span className="text-[12px] font-semibold tracking-[0.14em] text-heading uppercase">
-          Trip Sitter
+          TRIPSITR
         </span>
         {!isMobile && <GripHorizontal size={12} className="text-dim ml-1" />}
         <div className="flex-1" />
