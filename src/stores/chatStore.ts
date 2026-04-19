@@ -57,13 +57,16 @@ interface ChatStore {
   messages: ChatMessage[];
   isStreaming: boolean;
   currentPlan: TripPlanData | null;
-  isBuilding: boolean;
+  /** ID of the message whose plan is currently being built (for per-card spinner). */
+  buildingMessageId: string | null;
+  /** ID of the message whose plan was successfully built last (for "Built ✓" badge). */
+  builtMessageId: string | null;
   buildError: string | null;
   loadingHistory: boolean;
 
   loadForTrip: (tripId: string) => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
-  buildTrip: () => Promise<boolean>;
+  buildTrip: (plan?: TripPlanData, messageId?: string) => Promise<boolean>;
   reset: () => void;
 }
 
@@ -89,7 +92,8 @@ const useChatStore = create<ChatStore>((set, get) => ({
   messages: [],
   isStreaming: false,
   currentPlan: null,
-  isBuilding: false,
+  buildingMessageId: null,
+  builtMessageId: null,
   buildError: null,
   loadingHistory: false,
 
@@ -237,18 +241,19 @@ const useChatStore = create<ChatStore>((set, get) => ({
     }
   },
 
-  buildTrip: async () => {
-    const { currentPlan, tripId } = get();
-    if (!currentPlan) return false;
+  buildTrip: async (plan, messageId) => {
+    const { tripId, currentPlan } = get();
+    const planToBuild = plan ?? currentPlan;
+    if (!planToBuild) return false;
 
-    set({ isBuilding: true, buildError: null });
+    set({ buildingMessageId: messageId ?? '__current__', buildError: null });
 
     try {
       const geocoded: GeocodedStop[] = [];
       const batchSize = 3;
 
-      for (let i = 0; i < currentPlan.stops.length; i += batchSize) {
-        const batch = currentPlan.stops.slice(i, i + batchSize);
+      for (let i = 0; i < planToBuild.stops.length; i += batchSize) {
+        const batch = planToBuild.stops.slice(i, i + batchSize);
         const results = await Promise.all(
           batch.map(async (stop) => {
             const res = await fetch(`/api/geocode?query=${encodeURIComponent(stop.place_query)}`);
@@ -260,7 +265,7 @@ const useChatStore = create<ChatStore>((set, get) => ({
         geocoded.push(...results);
       }
 
-      const { trip, segments, stats } = await buildTripFromGeocodedStops(currentPlan, geocoded);
+      const { trip, segments, stats } = await buildTripFromGeocodedStops(planToBuild, geocoded);
 
       // Use the draft's existing tripId so we update in place (status flips to active)
       const finalTrip = tripId ? { ...trip, id: tripId, status: 'active' as const } : trip;
@@ -287,17 +292,24 @@ const useChatStore = create<ChatStore>((set, get) => ({
       usePlaybackStore.getState().reinitialize();
       useTripsListStore.setState({ activeTripId: finalTrip.id });
 
-      set({ isBuilding: false });
+      set({
+        buildingMessageId: null,
+        builtMessageId: messageId ?? null,
+      });
       return true;
     } catch (err) {
-      set({ isBuilding: false, buildError: err instanceof Error ? err.message : 'Failed to build trip' });
+      set({
+        buildingMessageId: null,
+        buildError: err instanceof Error ? err.message : 'Failed to build trip',
+      });
       return false;
     }
   },
 
+  // Note: also reset build tracking on full reset to avoid stale highlights.
   reset: () => {
     msgCounter = 0;
-    set({ tripId: null, messages: [], isStreaming: false, currentPlan: null, isBuilding: false, buildError: null, loadingHistory: false });
+    set({ tripId: null, messages: [], isStreaming: false, currentPlan: null, buildingMessageId: null, builtMessageId: null, buildError: null, loadingHistory: false });
   },
 }));
 

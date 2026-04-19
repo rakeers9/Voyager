@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Send, Compass, User, Loader2, Rocket, AlertCircle, Clock, MapPin, RotateCcw,
+  Car, Footprints, CheckCircle2, ArrowRight,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -19,8 +20,8 @@ export default function ChatPanel() {
 
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
-  const currentPlan = useChatStore((s) => s.currentPlan);
-  const isBuilding = useChatStore((s) => s.isBuilding);
+  const buildingMessageId = useChatStore((s) => s.buildingMessageId);
+  const builtMessageId = useChatStore((s) => s.builtMessageId);
   const buildError = useChatStore((s) => s.buildError);
   const sendMessage = useChatStore((s) => s.sendMessage);
   const buildTrip = useChatStore((s) => s.buildTrip);
@@ -36,8 +37,8 @@ export default function ChatPanel() {
     setInput('');
   };
 
-  const handleBuild = async () => {
-    const success = await buildTrip();
+  const handleBuild = async (plan: TripPlanData, messageId: string) => {
+    const success = await buildTrip(plan, messageId);
     if (success) router.push('/');
   };
 
@@ -64,7 +65,15 @@ export default function ChatPanel() {
             !msg.content &&
             !msg.tripPlan;
           if (isTrailingEmpty) return null;
-          return <MessageBubble key={msg.id} message={msg} />;
+          return (
+            <MessageBubble
+              key={msg.id}
+              message={msg}
+              isBuilding={buildingMessageId === msg.id}
+              isBuilt={builtMessageId === msg.id}
+              onBuild={() => msg.tripPlan && handleBuild(msg.tripPlan, msg.id)}
+            />
+          );
         })}
 
         {/* Streaming indicator */}
@@ -80,26 +89,13 @@ export default function ChatPanel() {
         )}
       </div>
 
-      {/* Build Trip bar — shows when a plan exists */}
-      {currentPlan && (
-        <div className="shrink-0 px-4 py-2.5 border-t border-white/[0.04] bg-info/[0.03]">
-          {buildError && (
-            <div className="flex items-center gap-2 text-[11px] text-danger mb-2">
-              <AlertCircle size={11} />
-              {buildError}
-            </div>
-          )}
-          <button
-            onClick={handleBuild}
-            disabled={isBuilding}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-sm bg-info text-white text-[13px] font-semibold hover:bg-info/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isBuilding ? (
-              <><Loader2 size={14} className="animate-spin" /> Building trip...</>
-            ) : (
-              <><Rocket size={14} /> Build Trip, {currentPlan.stops.length} stops</>
-            )}
-          </button>
+      {/* Global build error toast (button itself lives on each PlanCard) */}
+      {buildError && !buildingMessageId && (
+        <div className="shrink-0 px-4 py-2 border-t border-white/[0.04] bg-danger/[0.06]">
+          <div className="flex items-center gap-2 text-[11px] text-danger">
+            <AlertCircle size={11} />
+            {buildError}
+          </div>
         </div>
       )}
 
@@ -158,7 +154,17 @@ function EmptyState() {
   );
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function MessageBubble({
+  message,
+  isBuilding,
+  isBuilt,
+  onBuild,
+}: {
+  message: ChatMessage;
+  isBuilding: boolean;
+  isBuilt: boolean;
+  onBuild: () => void;
+}) {
   const isUser = message.role === 'user';
 
   return (
@@ -185,8 +191,13 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         )}
 
         {message.tripPlan && (
-          <div className="mt-2 max-w-[90%]">
-            <PlanCard plan={message.tripPlan} />
+          <div className="mt-2 max-w-[95%]">
+            <PlanCard
+              plan={message.tripPlan}
+              onBuild={onBuild}
+              isBuilding={isBuilding}
+              isBuilt={isBuilt}
+            />
           </div>
         )}
       </div>
@@ -243,33 +254,177 @@ function MarkdownBody({ content }: { content: string }) {
   );
 }
 
-function PlanCard({ plan }: { plan: TripPlanData }) {
+function PlanCard({
+  plan,
+  onBuild,
+  isBuilding,
+  isBuilt,
+}: {
+  plan: TripPlanData;
+  onBuild: () => void;
+  isBuilding: boolean;
+  isBuilt: boolean;
+}) {
+  // Group stops into days using cumulative duration starting at 8 AM local.
+  // Day breaks at midnight local time.
+  const days = groupStopsByDay(plan);
+  const totalStops = plan.stops.length;
+  const totalMinutes = plan.stops.reduce(
+    (sum, s) => sum + s.duration_minutes + (s.transit_duration_estimate ?? 0),
+    0
+  );
+
   return (
-    <div className="bg-white/[0.02] border border-white/[0.06] rounded-sm overflow-hidden">
-      <div className="px-3 py-2 border-b border-white/[0.04]">
-        <h4 className="text-heading text-[13px] font-semibold">{plan.title}</h4>
-        <p className="text-[11px] text-dim mt-0.5">{plan.description}</p>
-        <div className="flex items-center gap-2 mt-1 text-[10px] font-mono text-dim">
+    <div
+      className={`border rounded-sm overflow-hidden transition-colors ${
+        isBuilt
+          ? 'border-success/30 bg-success/[0.04]'
+          : 'border-white/[0.08] bg-white/[0.02]'
+      }`}
+    >
+      {/* Header */}
+      <div className="px-3 py-2.5 border-b border-white/[0.04]">
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="text-heading text-[13px] font-semibold leading-snug">
+            {plan.title}
+          </h4>
+          {isBuilt && (
+            <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-success">
+              <CheckCircle2 size={10} /> Built
+            </span>
+          )}
+        </div>
+        {plan.description && (
+          <p className="text-[11.5px] text-muted mt-1 leading-relaxed">
+            {plan.description}
+          </p>
+        )}
+        <div className="flex items-center gap-2 mt-1.5 text-[10px] font-mono text-dim flex-wrap">
           <span>{plan.start_date} to {plan.end_date}</span>
           <span>·</span>
-          <span className="flex items-center gap-0.5"><MapPin size={9} />{plan.stops.length} stops</span>
+          <span className="flex items-center gap-0.5"><MapPin size={9} />{totalStops} stops</span>
+          <span>·</span>
+          <span className="flex items-center gap-0.5"><Clock size={9} />{formatTotal(totalMinutes)}</span>
         </div>
       </div>
-      <div className="px-3 py-2 max-h-[200px] overflow-y-auto space-y-0.5">
-        {plan.stops.map((stop, i) => {
-          const seg = { type: 'stop' as const, category: stop.category } as Parameters<typeof getSegmentColor>[0];
-          const color = getSegmentColor(seg);
-          return (
-            <div key={i} className="flex items-center gap-2 py-1">
-              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-              <span className="text-[12px] text-primary truncate flex-1">{stop.name}</span>
-              <span className="text-[10px] font-mono text-dim flex items-center gap-0.5">
-                <Clock size={9} />{stop.duration_minutes}m
-              </span>
+
+      {/* Days */}
+      <div className="max-h-[320px] overflow-y-auto">
+        {days.map((day, di) => (
+          <div key={di} className="border-b border-white/[0.04] last:border-b-0">
+            <div className="sticky top-0 px-3 py-1 bg-[#0E0E11] border-b border-white/[0.03] text-[10px] font-mono uppercase tracking-widest text-dim">
+              Day {di + 1}
             </div>
-          );
-        })}
+            <div className="px-3 py-2 space-y-2">
+              {day.map((stop, si) => {
+                const seg = { type: 'stop' as const, category: stop.category } as Parameters<typeof getSegmentColor>[0];
+                const color = getSegmentColor(seg);
+                const showTransit = si > 0 && stop.transit_duration_estimate;
+                return (
+                  <div key={si}>
+                    {showTransit && (
+                      <div className="ml-4 mb-1 flex items-center gap-1.5 text-[10px] text-dim">
+                        {stop.transit_type === 'walk' ? (
+                          <Footprints size={9} />
+                        ) : (
+                          <Car size={9} />
+                        )}
+                        <span>{stop.transit_duration_estimate}m {stop.transit_type ?? 'drive'}</span>
+                      </div>
+                    )}
+                    <div className="flex items-start gap-2">
+                      <div
+                        className="w-2 h-2 rounded-full mt-1.5 shrink-0"
+                        style={{ backgroundColor: color }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <span className="text-[12.5px] text-primary font-medium leading-snug">
+                            {stop.name}
+                          </span>
+                          <span
+                            className="text-[9px] font-mono uppercase tracking-wider px-1 py-px rounded-sm"
+                            style={{
+                              backgroundColor: `${color}18`,
+                              color,
+                              border: `1px solid ${color}30`,
+                            }}
+                          >
+                            {stop.category}
+                          </span>
+                          <span className="text-[10px] font-mono text-dim flex items-center gap-0.5 ml-auto">
+                            <Clock size={9} />{stop.duration_minutes}m
+                          </span>
+                        </div>
+                        {stop.description && (
+                          <p className="text-[11px] text-muted leading-snug mt-0.5">
+                            {stop.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Build action (per-proposal) */}
+      <div className="px-3 py-2 bg-white/[0.02] border-t border-white/[0.04]">
+        <button
+          onClick={onBuild}
+          disabled={isBuilding}
+          className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-sm text-[12px] font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+            isBuilt
+              ? 'bg-white/[0.04] text-muted hover:bg-white/[0.07] border border-white/[0.06]'
+              : 'bg-info text-white hover:bg-info/90'
+          }`}
+        >
+          {isBuilding ? (
+            <>
+              <Loader2 size={13} className="animate-spin" />
+              Building this trip…
+            </>
+          ) : isBuilt ? (
+            <>
+              <ArrowRight size={13} />
+              Rebuild this version
+            </>
+          ) : (
+            <>
+              <Rocket size={13} />
+              Build this trip — {totalStops} stops
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
+}
+
+/** Group stops into days using cumulative time from 8 AM start. */
+function groupStopsByDay(plan: TripPlanData): TripPlanData['stops'][] {
+  const days: TripPlanData['stops'][] = [[]];
+  let minutesElapsed = 8 * 60; // start at 8 AM minute-of-day
+  for (const stop of plan.stops) {
+    minutesElapsed += stop.transit_duration_estimate ?? 0;
+    const startMin = minutesElapsed;
+    minutesElapsed += stop.duration_minutes;
+    const dayIdx = Math.floor(startMin / (24 * 60));
+    while (days.length <= dayIdx) days.push([]);
+    days[dayIdx].push(stop);
+  }
+  return days.filter((d) => d.length > 0);
+}
+
+function formatTotal(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h < 24) return m ? `${h}h ${m}m` : `${h}h`;
+  const d = Math.floor(h / 24);
+  const rh = h % 24;
+  return rh ? `${d}d ${rh}h` : `${d}d`;
 }
