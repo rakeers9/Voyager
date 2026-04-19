@@ -319,7 +319,7 @@ function PlanCard({
               {day.map((stop, si) => {
                 const seg = { type: 'stop' as const, category: stop.category } as Parameters<typeof getSegmentColor>[0];
                 const color = getSegmentColor(seg);
-                const showTransit = si > 0 && stop.transit_duration_estimate;
+                const showTransit = si > 0 && !!stop.transit_duration_estimate;
                 return (
                   <div key={si}>
                     {showTransit && (
