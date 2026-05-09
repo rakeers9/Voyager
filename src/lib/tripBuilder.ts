@@ -123,10 +123,73 @@ function normalizeStartTime(raw: string | undefined): string {
 /**
  * A stop as produced by the LLM chatbot.
  */
+export type StopCategory =
+  | 'meal'
+  | 'accommodation'
+  | 'activity'
+  | 'sightseeing'
+  | 'transit_hub'
+  | 'errand'
+  | 'rest';
+
+const ALLOWED_CATEGORIES: ReadonlySet<StopCategory> = new Set([
+  'meal',
+  'accommodation',
+  'activity',
+  'sightseeing',
+  'transit_hub',
+  'errand',
+  'rest',
+]);
+
+// Maps common LLM hallucinations onto the DB-allowed enum.
+const CATEGORY_ALIASES: Record<string, StopCategory> = {
+  food: 'meal',
+  restaurant: 'meal',
+  dining: 'meal',
+  breakfast: 'meal',
+  lunch: 'meal',
+  dinner: 'meal',
+  cafe: 'meal',
+  hotel: 'accommodation',
+  lodging: 'accommodation',
+  motel: 'accommodation',
+  hostel: 'accommodation',
+  airbnb: 'accommodation',
+  attraction: 'sightseeing',
+  landmark: 'sightseeing',
+  museum: 'sightseeing',
+  viewpoint: 'sightseeing',
+  shopping: 'errand',
+  store: 'errand',
+  gas: 'errand',
+  airport: 'transit_hub',
+  station: 'transit_hub',
+  transit: 'transit_hub',
+  break: 'rest',
+};
+
+/**
+ * Coerce an arbitrary string (or undefined) into one of the DB-allowed
+ * category values. The Gemini function-calling schema declares an `enum`,
+ * but the model treats it as a hint and occasionally returns out-of-set
+ * values like `"hotel"` or `"food"`, which violates the segments_category_check
+ * Postgres CHECK constraint on insert. Map known aliases, fall back to
+ * `activity` for anything else.
+ */
+export function normalizeCategory(raw: string | undefined | null): StopCategory {
+  if (!raw) return 'activity';
+  const lower = raw.toLowerCase().trim();
+  if (ALLOWED_CATEGORIES.has(lower as StopCategory)) return lower as StopCategory;
+  if (CATEGORY_ALIASES[lower]) return CATEGORY_ALIASES[lower];
+  console.warn(`[tripBuilder] Unknown category "${raw}" → coerced to "activity"`);
+  return 'activity';
+}
+
 export interface PlannedStop {
   name: string;
   place_query: string;
-  category: 'meal' | 'accommodation' | 'activity' | 'sightseeing' | 'transit_hub' | 'errand' | 'rest';
+  category: StopCategory;
   duration_minutes: number;
   description?: string;
   transit_type?: 'drive' | 'walk';
@@ -286,7 +349,7 @@ export async function buildTripFromGeocodedStops(
       title: stop.name,
       latitude: stop.lat,
       longitude: stop.lng,
-      category: stop.category,
+      category: normalizeCategory(stop.category),
       duration: stop.duration_minutes,
       details: {
         description: stop.description,
